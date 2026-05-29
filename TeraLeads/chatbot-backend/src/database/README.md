@@ -33,12 +33,9 @@ businesses (1) ----< chat_sessions (N)
 
 ## Local Development
 
-With Docker:
-
-```bash
-docker-compose up -d postgres
-psql -h localhost -U postgres -d chatbot_db -f src/database/data.sql  # optional sample data
-```
+`docker compose up` (from `TeraLeads/`) runs `schema.sql`, `indexing.sql` and
+`data.sql` on the first start of an empty Postgres volume. To reset, run
+`docker compose down -v`.
 
 Without Docker:
 
@@ -46,8 +43,11 @@ Without Docker:
 createdb chatbot_db
 psql -d chatbot_db -f src/database/schema.sql
 psql -d chatbot_db -f src/database/indexing.sql
-psql -d chatbot_db -f src/database/data.sql  # optional
+psql -d chatbot_db -f src/database/data.sql  # optional sample rows
 ```
+
+The sample users in `data.sql` have placeholder password hashes, so they
+cannot sign in; create an account through the UI or `POST /api/auth/signup`.
 
 ## Scalability
 

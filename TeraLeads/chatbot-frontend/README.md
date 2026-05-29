@@ -1,174 +1,23 @@
-# Chatbot Frontend
+# chatbot-frontend
 
-Frontend application for the AI Chatbot Appointment Booking System built with Next.js and TypeScript.
+Next.js 16 (App Router) client with Redux Toolkit and Tailwind. Pages: `/`
+(overview), `/login` (sign in or create an account) and `/chat` (the
+conversation plus a booking panel). Chat turns go over socket.io when the
+socket is connected and over `POST /api/chatbot/message` otherwise.
 
-## Features
+## Run and test
 
-- Real-time chat interface with WebSocket support
-- User authentication (login/signup) with JWT
-- Redux state management
-- Protected routes
-- Appointment booking integration
-- Responsive UI with Tailwind CSS
-- Accessibility features (ARIA labels, skip links, keyboard navigation)
-- Unit and E2E testing
-
-## Prerequisites
-
-- Node.js 18+
-- npm or yarn
-
-## Installation
-
-1. Install dependencies:
+Node 22 (`.nvmrc`).
 
 ```bash
-npm install
-```
-
-2. Copy environment variables:
-
-```bash
-cp .env.example .env
-```
-
-3. Update `.env` with your backend API URL:
-
-```
-NEXT_PUBLIC_API_URL=http://localhost:3001
-NEXT_PUBLIC_WS_URL=http://localhost:3001
-```
-
-## Environment Variables
-
-| Variable              | Description                            | Default                 |
-| --------------------- | -------------------------------------- | ----------------------- |
-| `NEXT_PUBLIC_API_URL` | Backend API base URL for REST requests | `http://localhost:3001` |
-| `NEXT_PUBLIC_WS_URL`  | WebSocket (Socket.io) server URL       | `http://localhost:3001` |
-
-## Development
-
-Run the development server:
-
-```bash
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) in your browser.
-
-## Testing
-
-### Unit Tests
-
-```bash
-npm test
-```
-
-Run tests in watch mode:
-
-```bash
-npm run test:watch
-```
-
-Run tests with coverage:
-
-```bash
-npm run test:coverage
-```
-
-### E2E Tests
-
-E2E tests require the backend to be running for authentication flows.
-
-```bash
-npm run test:e2e
-```
-
-Run E2E tests with UI:
-
-```bash
-npm run test:e2e:ui
-```
-
-## Build
-
-Build for production:
-
-```bash
+npm ci
+npm test               # Jest + Testing Library
+npm run lint
+npx tsc --noEmit
 npm run build
-npm start
+cp .env.example .env.local && npm run dev
 ```
 
-## Code Quality
-
-- **Lint**: `npm run lint`
-- **Format**: `npm run format`
-- **Format check**: `npm run format:check`
-
-## Docker Deployment
-
-Build the Docker image:
-
-```bash
-docker build -t chatbot-frontend .
-```
-
-Run the container:
-
-```bash
-docker run -p 3000:3000 -e NEXT_PUBLIC_API_URL=http://your-api-url -e NEXT_PUBLIC_WS_URL=http://your-ws-url chatbot-frontend
-```
-
-The Dockerfile uses multi-stage builds and Next.js standalone output for an optimized production image.
-
-## Project Structure
-
-```
-src/
-├── app/              # Next.js app directory (pages)
-│   ├── page.tsx      # Homepage
-│   ├── login/        # Login/signup page
-│   └── chat/         # Chat page (protected)
-├── components/
-│   ├── Auth/         # Authentication components
-│   │   ├── LoginForm.tsx
-│   │   ├── SignupForm.tsx
-│   │   ├── ProtectedRoute.tsx
-│   │   └── AuthInitializer.tsx
-│   ├── Chat/         # Chat interface components
-│   │   ├── ChatInterface.tsx
-│   │   ├── MessageList.tsx
-│   │   ├── MessageInput.tsx
-│   │   └── AppointmentConfirmation.tsx
-│   ├── Providers/    # Redux provider
-│   └── UI/           # Reusable UI components
-├── api/              # API client and functions
-│   ├── client.ts     # Axios instance with interceptors
-│   ├── auth.ts
-│   ├── chatbot.ts
-│   └── appointments.ts
-├── state/            # Redux store and slices
-├── hooks/            # Custom hooks
-├── utils/            # Utilities (WebSocket, JWT)
-└── styles/           # Global styles
-```
-
-## API Integration
-
-- **Authentication**: `/api/auth/login`, `/api/auth/signup`
-- **Chat**: `/api/chatbot/message`, `/api/chatbot/token`
-- **Appointments**: `/api/appointments`
-
-The WebSocket connection uses Socket.io for real-time chat. If the WebSocket is unavailable, the app falls back to REST API for sending messages.
-
-## Technologies
-
-- Next.js 14
-- React 18
-- TypeScript
-- Redux Toolkit
-- Tailwind CSS
-- Axios
-- Socket.io Client
-- Jest & React Testing Library
-- Playwright (E2E)
+`NEXT_PUBLIC_API_URL` and `NEXT_PUBLIC_WS_URL` are inlined at build time, so
+the Docker image takes them as build args. `npm run test:e2e` runs the
+Playwright specs in `e2e/` against `npm run dev` and a running backend.
