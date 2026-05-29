@@ -2,12 +2,12 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { signup } from '@/api/auth'
+import { signup, AuthenticationError } from '@/api/auth'
 import { useAppDispatch } from '@/hooks/useAppDispatch'
 import { setCredentials } from '@/state/slices/authSlice'
-import { AuthenticationError } from '@/api/auth'
 import { LoadingSpinner } from '@/components/UI/LoadingSpinner'
 import { ErrorMessage } from '@/components/UI/ErrorMessage'
+import { AuthField } from './AuthField'
 
 export function SignupForm() {
   const router = useRouter()
@@ -24,81 +24,61 @@ export function SignupForm() {
     setIsLoading(true)
     try {
       const response = await signup(email, password, name)
-      dispatch(
-        setCredentials({
-          user: response.user,
-          token: response.token,
-        })
-      )
+      dispatch(setCredentials({ user: response.user, token: response.token }))
       router.push('/chat')
     } catch (err) {
       setError(
-        err instanceof AuthenticationError ? err.message : 'Signup failed. Please try again.'
+        err instanceof AuthenticationError ? err.message : 'Sign-up failed. Please try again.'
       )
-    } finally {
       setIsLoading(false)
     }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 p-6 border rounded-lg">
-      <h2 className="text-2xl font-semibold mb-4">Sign Up</h2>
+    <form
+      onSubmit={handleSubmit}
+      aria-labelledby="signup-heading"
+      className="space-y-4 rounded-xl border border-line bg-card p-6 shadow-sm"
+    >
+      <h2 id="signup-heading" className="font-display text-2xl">
+        Create an account
+      </h2>
       {error && <ErrorMessage message={error} />}
-      <div>
-        <label htmlFor="signup-name" className="block text-sm font-medium mb-1">
-          Name
-        </label>
-        <input
-          id="signup-name"
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-          autoComplete="name"
-          aria-label="Full name"
-          aria-invalid={!!error}
-          className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-      </div>
-      <div>
-        <label htmlFor="signup-email" className="block text-sm font-medium mb-1">
-          Email
-        </label>
-        <input
-          id="signup-email"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          autoComplete="email"
-          aria-label="Email address"
-          aria-invalid={!!error}
-          className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-      </div>
-      <div>
-        <label htmlFor="signup-password" className="block text-sm font-medium mb-1">
-          Password
-        </label>
-        <input
-          id="signup-password"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          autoComplete="new-password"
-          aria-label="Password"
-          aria-invalid={!!error}
-          className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-      </div>
+      <AuthField
+        id="signup-name"
+        label="Full name"
+        type="text"
+        value={name}
+        onChange={setName}
+        autoComplete="name"
+        invalid={!!error}
+      />
+      <AuthField
+        id="signup-email"
+        label="Email address"
+        type="email"
+        value={email}
+        onChange={setEmail}
+        autoComplete="email"
+        invalid={!!error}
+      />
+      <AuthField
+        id="signup-password"
+        label="Password"
+        type="password"
+        value={password}
+        onChange={setPassword}
+        autoComplete="new-password"
+        invalid={!!error}
+        hint="At least 6 characters."
+      />
       <button
         type="submit"
         disabled={isLoading}
         aria-busy={isLoading}
-        className="w-full px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="flex min-h-touch w-full items-center justify-center rounded-md border-2 border-spruce px-4 font-bold text-spruce hover:bg-spruce-soft disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {isLoading ? <LoadingSpinner size="sm" /> : 'Sign Up'}
+        {isLoading ? <LoadingSpinner size="sm" label="Creating account" /> : 'Create account'}
       </button>
     </form>
   )

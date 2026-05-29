@@ -6,7 +6,7 @@ describe('MessageInput', () => {
   it('renders input and send button', () => {
     const onSend = jest.fn()
     render(<MessageInput onSend={onSend} />)
-    expect(screen.getByLabelText(/message input/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/your message/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /send message/i })).toBeInTheDocument()
   })
 
@@ -15,7 +15,7 @@ describe('MessageInput', () => {
     const onSend = jest.fn()
     render(<MessageInput onSend={onSend} />)
 
-    await user.type(screen.getByLabelText(/message input/i), 'Hello')
+    await user.type(screen.getByLabelText(/your message/i), 'Hello')
     await user.click(screen.getByRole('button', { name: /send message/i }))
 
     expect(onSend).toHaveBeenCalledWith('Hello')
@@ -26,7 +26,7 @@ describe('MessageInput', () => {
     const onSend = jest.fn()
     render(<MessageInput onSend={onSend} />)
 
-    const input = screen.getByLabelText(/message input/i)
+    const input = screen.getByLabelText(/your message/i)
     await user.type(input, 'Hello')
     await user.click(screen.getByRole('button', { name: /send message/i }))
 
@@ -48,7 +48,7 @@ describe('MessageInput', () => {
     const onSend = jest.fn()
     render(<MessageInput onSend={onSend} disabled />)
 
-    const input = screen.getByLabelText(/message input/i)
+    const input = screen.getByLabelText(/your message/i)
     await user.type(input, 'Hello')
     await user.click(screen.getByRole('button', { name: /send message/i }))
 
@@ -59,7 +59,7 @@ describe('MessageInput', () => {
     const onSend = jest.fn()
     render(<MessageInput onSend={onSend} isLoading />)
 
-    expect(screen.getByLabelText(/message input/i)).toBeDisabled()
+    expect(screen.getByLabelText(/your message/i)).toBeDisabled()
     expect(screen.getByRole('button', { name: /send message/i })).toBeDisabled()
   })
 })

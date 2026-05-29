@@ -9,7 +9,7 @@ describe('LoadingSpinner', () => {
 
   it('applies size classes', () => {
     const { container } = render(<LoadingSpinner size="sm" />)
-    expect(container.firstChild).toHaveClass('w-4', 'h-4')
+    expect(container.querySelector('[aria-hidden="true"]')).toHaveClass('w-4', 'h-4')
   })
 
   it('renders screen reader text', () => {

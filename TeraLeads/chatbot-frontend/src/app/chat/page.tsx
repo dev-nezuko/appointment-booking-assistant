@@ -1,13 +1,13 @@
 'use client'
 
-import Link from 'next/link'
 import { ChatInterface } from '@/components/Chat/ChatInterface'
 import { ProtectedRoute } from '@/components/Auth/ProtectedRoute'
 import { useAppSelector } from '@/hooks/useAppSelector'
-import { clearStoredToken } from '@/api/auth'
 import { useAppDispatch } from '@/hooks/useAppDispatch'
+import { clearStoredToken } from '@/api/auth'
 import { logout } from '@/state/slices/authSlice'
 import { clearChat } from '@/state/slices/chatSlice'
+import { Brand } from '@/components/UI/Brand'
 
 export default function ChatPage() {
   const dispatch = useAppDispatch()
@@ -21,25 +21,33 @@ export default function ChatPage() {
 
   return (
     <ProtectedRoute>
-      <div id="main-content" className="flex h-screen flex-col p-4 md:p-8" role="main">
-        <header className="flex items-center justify-between mb-6 md:mb-8">
-          <h1 className="text-2xl md:text-3xl font-bold">Chat with AI Assistant</h1>
-          <div className="flex items-center gap-4">
-            {user && <span className="text-sm text-gray-600 hidden sm:inline">{user.email}</span>}
-            <Link href="/" className="text-sm text-blue-500 hover:underline">
-              Home
-            </Link>
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="text-sm px-3 py-1 border border-red-500 text-red-500 rounded hover:bg-red-50"
-              aria-label="Log out"
-            >
-              Logout
-            </button>
+      <div className="flex min-h-screen flex-col lg:h-screen">
+        <header className="border-b border-line bg-card">
+          <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
+            <Brand />
+            <div className="flex items-center gap-3">
+              {user && (
+                <span className="hidden text-sm text-muted sm:inline">
+                  Signed in as <strong className="text-ink">{user.name || user.email}</strong>
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="min-h-touch rounded-md border border-line px-3 text-sm font-bold hover:border-danger hover:text-danger"
+              >
+                Sign out
+              </button>
+            </div>
           </div>
         </header>
-        <ChatInterface />
+        <main
+          id="main-content"
+          className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 py-4 sm:px-6 sm:py-6 lg:min-h-0"
+        >
+          <h1 className="sr-only">Book an appointment</h1>
+          <ChatInterface />
+        </main>
       </div>
     </ProtectedRoute>
   )

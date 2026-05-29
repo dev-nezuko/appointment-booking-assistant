@@ -10,7 +10,7 @@ export function ErrorMessage({ message, className = '', onDismiss }: ErrorMessag
   return (
     <div
       role="alert"
-      className={`rounded-lg bg-red-50 p-3 text-red-500 text-sm flex items-center justify-between gap-2 ${className}`}
+      className={`flex items-start justify-between gap-2 rounded-md border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger ${className}`}
     >
       <span className="flex-1">{message}</span>
       {onDismiss && (
@@ -18,9 +18,9 @@ export function ErrorMessage({ message, className = '', onDismiss }: ErrorMessag
           type="button"
           onClick={onDismiss}
           aria-label="Dismiss error"
-          className="p-1 hover:bg-red-100 rounded"
+          className="-my-1 grid min-h-touch min-w-touch place-items-center rounded hover:bg-white/60"
         >
-          ×
+          <span aria-hidden="true">×</span>
         </button>
       )}
     </div>

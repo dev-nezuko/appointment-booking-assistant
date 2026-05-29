@@ -25,7 +25,7 @@ describe('LoginForm', () => {
     render(<LoginForm />)
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/password/i)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /login/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument()
   })
 
   it('shows error message on failed login', async () => {
@@ -35,7 +35,7 @@ describe('LoginForm', () => {
     render(<LoginForm />)
     await user.type(screen.getByLabelText(/email/i), 'test@example.com')
     await user.type(screen.getByLabelText(/password/i), 'wrongpassword')
-    await user.click(screen.getByRole('button', { name: /login/i }))
+    await user.click(screen.getByRole('button', { name: /sign in/i }))
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toBeInTheDocument()
@@ -55,9 +55,9 @@ describe('LoginForm', () => {
     render(<LoginForm />)
     await user.type(screen.getByLabelText(/email/i), 'test@example.com')
     await user.type(screen.getByLabelText(/password/i), 'password123')
-    await user.click(screen.getByRole('button', { name: /login/i }))
+    await user.click(screen.getByRole('button', { name: /sign in/i }))
 
-    expect(screen.getByRole('button', { name: /loading|login/i })).toBeDisabled()
+    expect(screen.getByRole('button', { name: /signing in|sign in/i })).toBeDisabled()
     resolveLogin!({
       token: 'token',
       user: { id: '1', email: 'test@example.com', name: 'Test' },
@@ -72,7 +72,7 @@ describe('LoginForm', () => {
     render(<LoginForm />)
     await user.type(screen.getByLabelText(/email/i), 'test@example.com')
     await user.type(screen.getByLabelText(/password/i), 'wrong')
-    await user.click(screen.getByRole('button', { name: /login/i }))
+    await user.click(screen.getByRole('button', { name: /sign in/i }))
 
     await waitFor(() => {
       expect(screen.getByText(/invalid credentials/i)).toBeInTheDocument()

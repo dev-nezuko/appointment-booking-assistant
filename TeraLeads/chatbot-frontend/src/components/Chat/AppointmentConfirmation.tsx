@@ -8,6 +8,14 @@ interface AppointmentConfirmationProps {
   onConfirm?: () => void
 }
 
+function readableDate(iso: string): string {
+  const date = new Date(`${iso}T00:00:00`)
+  return Number.isNaN(date.getTime())
+    ? iso
+    : date.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })
+}
+
+/** The appointment slip: what will be booked, or what has been. */
 export function AppointmentConfirmation({
   appointment,
   booked = false,
@@ -15,34 +23,36 @@ export function AppointmentConfirmation({
 }: AppointmentConfirmationProps) {
   return (
     <section
-      className="rounded-lg border border-green-200 bg-green-50 p-4 my-2"
       aria-label={booked ? 'Booked appointment' : 'Appointment to confirm'}
+      className={`rounded-xl border-2 border-dashed p-4 ${
+        booked ? 'border-spruce bg-spruce-soft' : 'border-amber/60 bg-amber-soft'
+      }`}
     >
-      <h3 className="font-semibold text-green-800 mb-2">
+      <p
+        className={`text-xs font-bold uppercase tracking-wider ${booked ? 'text-spruce' : 'text-amber'}`}
+      >
         {booked ? 'Booked' : 'Ready to book'}
         {booked && appointment.id !== undefined && ` · reference #${appointment.id}`}
-      </h3>
-      <dl className="space-y-1 text-sm text-green-700">
-        <div>
-          <dt className="inline font-medium">Date: </dt>
-          <dd className="inline">{appointment.date}</dd>
-        </div>
-        <div>
-          <dt className="inline font-medium">Time: </dt>
-          <dd className="inline">{appointment.time}</dd>
-        </div>
+      </p>
+      <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1">
         {appointment.type && (
-          <div>
-            <dt className="inline font-medium">Service: </dt>
-            <dd className="inline">{appointment.type}</dd>
-          </div>
+          <>
+            <dt className="text-muted">Service</dt>
+            <dd className="font-bold">{appointment.type}</dd>
+          </>
         )}
+        <dt className="text-muted">Date</dt>
+        <dd className="font-bold">
+          <time dateTime={appointment.date}>{readableDate(appointment.date)}</time>
+        </dd>
+        <dt className="text-muted">Time</dt>
+        <dd className="font-bold">{appointment.time}</dd>
       </dl>
       {onConfirm && (
         <button
           type="button"
           onClick={onConfirm}
-          className="mt-4 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+          className="mt-4 min-h-touch w-full rounded-md bg-spruce px-4 font-bold text-white hover:bg-spruce-dark"
         >
           Confirm booking
         </button>

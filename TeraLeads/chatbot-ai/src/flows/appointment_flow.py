@@ -320,7 +320,7 @@ missing info (date, time, type)."""
         apt = state["appointment_data"]
         return (
             f"Great! I have you scheduled for {apt.get('date')} "
-            f"at {apt.get('time')} for a {apt.get('service_type', 'appointment')}. "
+            f"at {apt.get('time', '')[:5]} for a {apt.get('service_type', 'appointment')}. "
             "Is this correct?"
         )
 

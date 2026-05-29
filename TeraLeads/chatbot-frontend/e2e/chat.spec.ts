@@ -19,27 +19,27 @@ test.describe('Chat', () => {
       .getByLabel(/^password$/i)
       .last()
       .fill('password123')
-    await page.getByRole('button', { name: /sign up/i }).click()
+    await page.getByRole('button', { name: /create account/i }).click()
 
     await page.waitForURL(/.*chat/, { timeout: 15000 })
 
-    await expect(page.getByRole('heading', { name: /chat with ai/i })).toBeVisible()
-    await expect(page.getByLabel(/message input/i)).toBeVisible()
+    await expect(page.getByRole('heading', { name: /chat with front desk/i })).toBeVisible()
+    await expect(page.getByLabel(/your message/i)).toBeVisible()
     await expect(page.getByRole('button', { name: /send message/i })).toBeVisible()
   })
 
   test('message input is interactive', async ({ page }) => {
     await page.goto('/login')
-    await page.getByLabel(/email/i).fill('e2e@example.com')
+    await page.getByLabel(/email/i).first().fill('e2e@example.com')
     await page
       .getByLabel(/password/i)
       .first()
       .fill('password123')
-    await page.getByRole('button', { name: /login/i }).click()
+    await page.getByRole('button', { name: /sign in/i }).click()
 
     await page.waitForURL(/.*chat/, { timeout: 15000 })
 
-    const input = page.getByLabel(/message input/i)
+    const input = page.getByLabel(/your message/i)
     await input.fill('Hello')
     await expect(input).toHaveValue('Hello')
   })

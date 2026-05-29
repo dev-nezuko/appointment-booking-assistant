@@ -1,18 +1,28 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: [
-    './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/app/**/*.{js,ts,jsx,tsx,mdx}',
-  ],
+  content: ['./src/app/**/*.{ts,tsx}', './src/components/**/*.{ts,tsx}'],
   theme: {
     extend: {
-      minHeight: {
-        touch: '44px',
+      colors: {
+        paper: 'var(--paper)',
+        card: 'var(--card)',
+        ink: 'var(--ink)',
+        muted: 'var(--muted)',
+        line: 'var(--line)',
+        spruce: {
+          DEFAULT: 'var(--spruce)',
+          dark: 'var(--spruce-dark)',
+          soft: 'var(--spruce-soft)',
+        },
+        amber: { DEFAULT: 'var(--amber)', soft: 'var(--amber-soft)' },
+        danger: { DEFAULT: 'var(--danger)', soft: 'var(--danger-soft)' },
       },
-      minWidth: {
-        touch: '44px',
+      fontFamily: {
+        display: ['var(--font-display)', 'Georgia', 'serif'],
+        sans: ['var(--font-body)', 'system-ui', 'sans-serif'],
       },
+      minHeight: { touch: '44px' },
+      minWidth: { touch: '44px' },
     },
   },
   plugins: [],

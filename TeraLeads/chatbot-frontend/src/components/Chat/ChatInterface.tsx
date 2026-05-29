@@ -17,7 +17,7 @@ import { connectWebSocket, disconnectWebSocket, getSocket } from '@/utils/websoc
 import { sendMessage as sendMessageApi, ChatbotError } from '@/api/chatbot'
 import { MessageList } from './MessageList'
 import { MessageInput } from './MessageInput'
-import { AppointmentConfirmation } from './AppointmentConfirmation'
+import { BookingPanel } from './BookingPanel'
 import { ErrorMessage } from '@/components/UI/ErrorMessage'
 
 function generateSessionId(): string {
@@ -146,40 +146,55 @@ export function ChatInterface() {
         ? 'Connecting…'
         : 'Sending over HTTP'
 
-  const showCard =
-    booking?.appointment && (booking.status === 'ready_to_book' || booking.status === 'booked')
-
   return (
-    <div className="flex flex-col flex-1 min-h-[400px] border rounded-lg p-4 bg-white shadow-sm">
-      <div className="flex items-center justify-between mb-4">
-        <span
-          className={`text-xs px-2 py-1 rounded ${
-            connectionStatus === 'connected'
-              ? 'bg-green-100 text-green-800'
-              : 'bg-gray-100 text-gray-600'
-          }`}
-          role="status"
-          aria-live="polite"
-        >
-          {statusLabel}
-        </span>
-      </div>
-      {error && (
-        <ErrorMessage message={error} className="mb-4" onDismiss={() => dispatch(setError(null))} />
-      )}
-      <MessageList messages={messages} />
-      {showCard && booking?.appointment && (
-        <AppointmentConfirmation
-          appointment={booking.appointment}
-          booked={booking.status === 'booked'}
-          onConfirm={
-            booking.status === 'ready_to_book' && !isLoading
-              ? () => handleSendMessage('yes')
-              : undefined
-          }
+    <div className="grid flex-1 gap-4 lg:min-h-0 lg:grid-cols-[minmax(0,1fr)_320px]">
+      <section
+        aria-label="Conversation"
+        className="flex min-h-[480px] flex-col rounded-xl border border-line bg-card p-4 shadow-sm lg:min-h-0"
+      >
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <h2 className="font-display text-xl">Chat with Front Desk</h2>
+          <span
+            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold ${
+              connectionStatus === 'connected'
+                ? 'bg-spruce-soft text-spruce'
+                : 'bg-paper text-muted'
+            }`}
+            role="status"
+            aria-live="polite"
+          >
+            <span
+              aria-hidden="true"
+              className={`h-2 w-2 rounded-full ${
+                connectionStatus === 'connected' ? 'bg-spruce' : 'bg-muted'
+              }`}
+            />
+            {statusLabel}
+          </span>
+        </div>
+        {error && (
+          <ErrorMessage
+            message={error}
+            className="mb-3"
+            onDismiss={() => dispatch(setError(null))}
+          />
+        )}
+        <MessageList
+          messages={messages}
+          isWaiting={isLoading}
+          onSuggestion={token ? handleSendMessage : undefined}
         />
-      )}
-      <MessageInput onSend={handleSendMessage} isLoading={isLoading} disabled={!token} />
+        <MessageInput onSend={handleSendMessage} isLoading={isLoading} disabled={!token} />
+      </section>
+      <aside
+        aria-labelledby="booking-heading"
+        className="order-first rounded-xl border border-line bg-card p-4 shadow-sm lg:order-none lg:self-start"
+      >
+        <h2 id="booking-heading" className="mb-3 font-display text-xl">
+          Your booking
+        </h2>
+        <BookingPanel booking={booking} busy={isLoading} onSend={handleSendMessage} />
+      </aside>
     </div>
   )
 }

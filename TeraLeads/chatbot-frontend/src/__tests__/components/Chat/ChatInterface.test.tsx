@@ -58,14 +58,14 @@ describe('ChatInterface', () => {
 
   it('renders message input', () => {
     render(<ChatInterface />)
-    expect(screen.getByLabelText(/message input/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/your message/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /send message/i })).toBeInTheDocument()
   })
 
   it('sends message and displays bot response when using REST fallback', async () => {
     const user = userEvent.setup()
     render(<ChatInterface />)
-    await user.type(screen.getByLabelText(/message input/i), 'Hello')
+    await user.type(screen.getByLabelText(/your message/i), 'Hello')
     await user.click(screen.getByRole('button', { name: /send message/i }))
 
     await waitFor(() => {
@@ -83,7 +83,7 @@ describe('ChatInterface', () => {
 
     const user = userEvent.setup()
     render(<ChatInterface />)
-    await user.type(screen.getByLabelText(/message input/i), 'Hello')
+    await user.type(screen.getByLabelText(/your message/i), 'Hello')
     await user.click(screen.getByRole('button', { name: /send message/i }))
 
     await waitFor(() => {
@@ -99,7 +99,7 @@ describe('ChatInterface', () => {
     it('emits each message once and waits for the reply', async () => {
       const user = userEvent.setup()
       render(<ChatInterface />)
-      await user.type(screen.getByLabelText(/message input/i), 'yes')
+      await user.type(screen.getByLabelText(/your message/i), 'yes')
       await user.click(screen.getByRole('button', { name: /send message/i }))
 
       expect(mockSocket.emit).toHaveBeenCalledTimes(1)
@@ -107,12 +107,12 @@ describe('ChatInterface', () => {
         sessionId: expect.any(String),
         message: 'yes',
       })
-      expect(screen.getByLabelText(/message input/i)).toBeDisabled()
+      expect(screen.getByLabelText(/your message/i)).toBeDisabled()
 
       act(() => handlers['bot:message']({ text: 'Is this correct?', booking: null }))
 
       expect(screen.getByText('Is this correct?')).toBeInTheDocument()
-      expect(screen.getByLabelText(/message input/i)).toBeEnabled()
+      expect(screen.getByLabelText(/your message/i)).toBeEnabled()
     })
 
     it('shows the summary card and confirms with one click', async () => {
@@ -161,13 +161,13 @@ describe('ChatInterface', () => {
     it('surfaces chat:error and re-enables the input', async () => {
       const user = userEvent.setup()
       render(<ChatInterface />)
-      await user.type(screen.getByLabelText(/message input/i), 'hi')
+      await user.type(screen.getByLabelText(/your message/i), 'hi')
       await user.click(screen.getByRole('button', { name: /send message/i }))
 
       act(() => handlers['chat:error']({ message: 'The assistant is unavailable right now.' }))
 
       expect(screen.getByRole('alert')).toHaveTextContent(/unavailable/)
-      expect(screen.getByLabelText(/message input/i)).toBeEnabled()
+      expect(screen.getByLabelText(/your message/i)).toBeEnabled()
     })
   })
 })

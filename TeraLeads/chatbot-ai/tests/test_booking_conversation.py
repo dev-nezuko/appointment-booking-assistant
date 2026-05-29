@@ -74,7 +74,7 @@ async def test_changing_the_time_while_confirming_reads_back_a_new_summary(flow)
     await say(flow, "s1", "consultation tomorrow at 10am")
     reply, meta = await say(flow, "s1", "yes but at 2pm")
     assert meta["status"] == "ready_to_book"
-    assert "14:00:00" in reply
+    assert "at 14:00 " in reply
     assert flow.appointment_store.get_all() == []
 
 

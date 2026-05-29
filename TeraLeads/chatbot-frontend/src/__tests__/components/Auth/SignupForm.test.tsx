@@ -20,7 +20,7 @@ describe('SignupForm', () => {
     expect(screen.getByLabelText(/full name/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/email address/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/^password$/i)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /sign up/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /create account/i })).toBeInTheDocument()
   })
 
   it('shows error message on failed signup', async () => {
@@ -31,7 +31,7 @@ describe('SignupForm', () => {
     await user.type(screen.getByLabelText(/full name/i), 'Test User')
     await user.type(screen.getByLabelText(/email address/i), 'test@example.com')
     await user.type(screen.getByLabelText(/^password$/i), 'password123')
-    await user.click(screen.getByRole('button', { name: /sign up/i }))
+    await user.click(screen.getByRole('button', { name: /create account/i }))
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toBeInTheDocument()
@@ -52,9 +52,9 @@ describe('SignupForm', () => {
     await user.type(screen.getByLabelText(/full name/i), 'New User')
     await user.type(screen.getByLabelText(/email address/i), 'new@example.com')
     await user.type(screen.getByLabelText(/^password$/i), 'password123')
-    await user.click(screen.getByRole('button', { name: /sign up/i }))
+    await user.click(screen.getByRole('button', { name: /create account/i }))
 
-    expect(screen.getByRole('button', { name: /loading|sign up/i })).toBeDisabled()
+    expect(screen.getByRole('button', { name: /creating account|create account/i })).toBeDisabled()
     resolveSignup!({
       token: 'token',
       user: { id: '1', email: 'new@example.com', name: 'New User' },

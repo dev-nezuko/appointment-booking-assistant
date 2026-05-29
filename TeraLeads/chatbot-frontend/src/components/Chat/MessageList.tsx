@@ -1,56 +1,98 @@
 'use client'
 
+import { useEffect, useRef } from 'react'
 import type { Message } from '@/state/slices/chatSlice'
 
 interface MessageListProps {
   messages: Message[]
+  isWaiting?: boolean
+  onSuggestion?: (text: string) => void
 }
+
+const SUGGESTIONS = [
+  "I'd like a consultation tomorrow at 11am",
+  'A check-up next Friday',
+  'Can I book a cleaning?',
+]
 
 function formatTime(isoString: string): string {
-  try {
-    const date = new Date(isoString)
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-  } catch {
-    return ''
-  }
+  const date = new Date(isoString)
+  return Number.isNaN(date.getTime())
+    ? ''
+    : date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
 
-export function MessageList({ messages }: MessageListProps) {
+export function MessageList({ messages, isWaiting = false, onSuggestion }: MessageListProps) {
+  const endRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    endRef.current?.scrollIntoView?.({ block: 'end' })
+  }, [messages.length, isWaiting])
+
   return (
     <div
-      className="flex-1 overflow-y-auto mb-4 space-y-4 min-h-[200px]"
+      className="min-h-[240px] flex-1 space-y-4 overflow-y-auto px-1 pb-2"
       role="log"
       aria-live="polite"
       aria-label="Chat messages"
     >
       {messages.length === 0 ? (
-        <p className="text-gray-500 text-center py-8">No messages yet. Start a conversation!</p>
+        <div className="mx-auto max-w-md py-10 text-center">
+          <p className="font-display text-xl">No messages yet.</p>
+          <p className="mt-2 text-muted">
+            Tell Front Desk what you need and when. It will ask for anything that is missing.
+          </p>
+          {onSuggestion && (
+            <ul className="mt-5 flex flex-wrap justify-center gap-2" aria-label="Example requests">
+              {SUGGESTIONS.map((text) => (
+                <li key={text}>
+                  <button
+                    type="button"
+                    onClick={() => onSuggestion(text)}
+                    className="min-h-touch rounded-full border border-line bg-card px-4 text-sm hover:border-spruce hover:text-spruce"
+                  >
+                    {text}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       ) : (
-        messages.map((message) => (
-          <div
-            key={message.id}
-            className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-          >
-            <div
-              className={`max-w-[85%] sm:max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                message.sender === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'
-              }`}
-            >
-              <p>{message.text}</p>
-              {message.timestamp && (
-                <time
-                  dateTime={message.timestamp}
-                  className={`text-xs mt-1 block ${
-                    message.sender === 'user' ? 'text-blue-100' : 'text-gray-500'
-                  }`}
-                >
-                  {formatTime(message.timestamp)}
-                </time>
-              )}
+        messages.map((message) => {
+          const mine = message.sender === 'user'
+          return (
+            <div key={message.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
+              <div
+                className={`max-w-[85%] rounded-2xl px-4 py-2.5 sm:max-w-md ${
+                  mine
+                    ? 'rounded-br-sm bg-spruce text-white'
+                    : 'rounded-bl-sm border border-line bg-card text-ink'
+                }`}
+              >
+                <span className="sr-only">{mine ? 'You said:' : 'Front Desk said:'}</span>
+                <p>{message.text}</p>
+                {message.timestamp && (
+                  <time
+                    dateTime={message.timestamp}
+                    className={`mt-1 block text-xs ${mine ? 'text-white/80' : 'text-muted'}`}
+                  >
+                    {formatTime(message.timestamp)}
+                  </time>
+                )}
+              </div>
             </div>
-          </div>
-        ))
+          )
+        })
       )}
+      {isWaiting && (
+        <div className="flex justify-start">
+          <p className="rounded-2xl rounded-bl-sm border border-dashed border-line px-4 py-2.5 text-muted">
+            Checking the calendar…
+          </p>
+        </div>
+      )}
+      <div ref={endRef} />
     </div>
   )
 }
