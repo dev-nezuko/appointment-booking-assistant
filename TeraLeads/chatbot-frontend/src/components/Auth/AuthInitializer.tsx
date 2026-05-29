@@ -22,18 +22,23 @@ export function AuthInitializer({ children }: { children: React.ReactNode }) {
       return
     }
 
+    // The backend signs `id`; `userId` is accepted for tokens issued before
+    // the claims were unified.
     const decoded = decodeToken(token)
-    if (decoded && decoded.userId && decoded.email) {
+    const userId = decoded?.id ?? decoded?.userId
+    if (decoded && userId && decoded.email) {
       dispatch(
         setCredentials({
           token,
           user: {
-            id: String(decoded.userId),
+            id: String(userId),
             email: String(decoded.email),
             name: String(decoded.name || decoded.email),
           },
         })
       )
+    } else {
+      localStorage.removeItem('token')
     }
   }, [dispatch, isAuthenticated])
 

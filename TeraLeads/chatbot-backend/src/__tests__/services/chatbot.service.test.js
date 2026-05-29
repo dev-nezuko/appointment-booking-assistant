@@ -11,8 +11,10 @@ jest.mock('../../utils/logger', () => ({
   info: jest.fn(),
   error: jest.fn(),
   warn: jest.fn(),
+  debug: jest.fn(),
 }))
 
+const jwt = require('../../utils/jwt')
 const ChatSession = require('../../models/ChatSession')
 const aiClient = require('../../services/aiClient')
 const appointmentService = require('../../services/appointment.service')
@@ -27,6 +29,17 @@ beforeEach(() => {
     booking: { status: 'collecting_info', missingFields: ['date', 'time'], appointment: null },
   })
   ChatSession.addMessage.mockResolvedValue({})
+})
+
+describe('generateChatbotToken', () => {
+  it('signs the same id claim the auth middleware reads', async () => {
+    const token = await chatbotService.generateChatbotToken(4)
+    const claims = jwt.verifyToken(token)
+
+    expect(claims.id).toBe(4)
+    expect(claims.type).toBe('chatbot')
+    expect(claims.exp - claims.iat).toBe(15 * 60)
+  })
 })
 
 describe('sendMessage', () => {

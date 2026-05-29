@@ -87,6 +87,7 @@ const signup = async (email, password, name) => {
     const token = jwt.generateToken({
       id: user.id,
       email: user.email,
+      name: user.name,
     })
 
     // Log successful signup (without sensitive data)
@@ -176,6 +177,7 @@ const login = async (email, password) => {
     const token = jwt.generateToken({
       id: user.id,
       email: user.email,
+      name: user.name,
     })
 
     // Log successful login (without sensitive data)

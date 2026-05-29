@@ -8,11 +8,10 @@ const SLOT_TAKEN_REPLY =
   'That time has just been taken in our calendar, so I could not book it. ' +
   'Could you pick another time?'
 
-const generateChatbotToken = async (userId) => {
-  // Generate short-lived token for chatbot access (15 minutes)
-  const token = jwt.generateToken({ userId, type: 'chatbot' }, { expiresIn: '15m' })
-  return token
-}
+// Same `id` claim as a login token, so the auth middleware and the socket
+// handshake accept it; `type` marks it as the short-lived chat credential.
+const generateChatbotToken = async (userId) =>
+  jwt.generateToken({ id: userId, type: 'chatbot' }, { expiresIn: '15m' })
 
 /**
  * Write a booking the assistant has just confirmed into Postgres, which is the
