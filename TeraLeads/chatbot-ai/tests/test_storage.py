@@ -93,3 +93,26 @@ class TestLogStore:
         log_store.log_conversation("s1", 1, "Hi", "Hello")
         logs = log_store.get_by_date_range("2020-01-01", "2030-12-31")
         assert len(logs) >= 1
+
+
+class TestJsonFile:
+    def test_a_corrupt_file_reads_as_empty_and_is_replaced_on_write(self, temp_data_dir):
+        from storage.json_file import JsonFile
+
+        path = Path(temp_data_dir) / "doc.json"
+        path.write_text("{not json")
+        doc = JsonFile(path, {"items": []})
+
+        assert doc.read() == {"items": []}
+        doc.write({"items": [1]})
+        assert doc.read() == {"items": [1]}
+        assert not path.with_suffix(".tmp").exists()
+
+    def test_the_empty_default_is_not_shared_between_reads(self, temp_data_dir):
+        from storage.json_file import JsonFile
+
+        path = Path(temp_data_dir) / "missing" / "doc.json"
+        doc = JsonFile(path, {"items": []})
+        path.unlink()
+        doc.read()["items"].append("leak")
+        assert doc.read() == {"items": []}

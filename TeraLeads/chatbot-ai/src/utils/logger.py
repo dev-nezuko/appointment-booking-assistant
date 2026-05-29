@@ -4,7 +4,7 @@ Logging utilities for conversation tracking and service monitoring
 import json
 import logging
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -14,7 +14,7 @@ class JsonFormatter(logging.Formatter):
 
     def format(self, record: logging.LogRecord) -> str:
         log_obj: Dict[str, Any] = {
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "level": record.levelname,
             "logger": record.name,
             "message": record.getMessage(),
@@ -85,31 +85,3 @@ def setup_logger(
     logger.addHandler(console_handler)
 
     return logger
-
-
-def log_interaction(
-    session_id: str,
-    user_message: str,
-    bot_response: str,
-    logger: logging.Logger,
-    metadata: Optional[Dict[str, Any]] = None,
-) -> None:
-    """
-    Log a conversation interaction with structured metadata.
-    """
-    log_data = {
-        "session_id": session_id,
-        "user_message": user_message,
-        "bot_response": bot_response,
-        "timestamp": datetime.now().isoformat(),
-        **(metadata or {}),
-    }
-    logger.info(json.dumps(log_data, default=str))
-
-
-def log_struct(logger: logging.Logger, level: int, data: Dict[str, Any]) -> None:
-    """
-    Log structured data as JSON for analytics and debugging.
-    """
-    msg = json.dumps(data, default=str)
-    logger.log(level, msg)

@@ -1,30 +1,21 @@
 """
-LLM provider abstraction for OpenAI, Anthropic, or a local rule-based model.
+Chooses the chat model: OpenAI, Anthropic, or the local rule-based model.
 
-Provider selection is `auto` by default: use a real model when a key is
-present, and fall back to the local model when none is. Previously the
-constructor raised without OPENAI_API_KEY, so the service could not start and
-the tests could not run without a billing relationship — which put the parts
-worth reviewing (slot filling, availability, the double-booking guard) out of
-reach of anyone who cloned the repository.
+Selection is `auto` by default: a hosted model when its key is present, the
+local model otherwise. That keeps the service and its tests runnable from a
+fresh clone with no vendor account.
 """
 import os
 from typing import Optional
+
+from langchain_anthropic import ChatAnthropic
 from langchain_openai import ChatOpenAI
 
 from llm.local_model import LocalChatModel
 
-try:
-    from langchain_anthropic import ChatAnthropic
-except ImportError:
-    ChatAnthropic = None  # type: ignore
-
 
 class LLMProvider:
-    """
-    Abstraction layer for different LLM providers.
-    Supports OpenAI and Anthropic via langchain-openai and langchain-anthropic.
-    """
+    """Resolves LLM_PROVIDER and the API keys into one LangChain chat model."""
 
     def __init__(self):
         self.provider = self._resolve_provider()
@@ -74,9 +65,6 @@ class LLMProvider:
         return self.provider == "local"
 
     def _initialize_model(self):
-        """
-        Initialize the appropriate LLM based on provider.
-        """
         if self.provider == "local":
             return LocalChatModel()
         if self.provider == "openai":
@@ -92,9 +80,7 @@ class LLMProvider:
                 temperature=0.7,
                 openai_api_key=api_key,
             )
-        elif self.provider == "anthropic":
-            if ChatAnthropic is None:
-                raise ValueError("langchain-anthropic not installed. pip install langchain-anthropic")
+        if self.provider == "anthropic":
             api_key = self._usable_key("ANTHROPIC_API_KEY")
             if not api_key:
                 raise ValueError(
@@ -107,64 +93,11 @@ class LLMProvider:
                 temperature=0.7,
                 anthropic_api_key=api_key,
             )
-        else:
-            raise ValueError(
-                f"Unsupported LLM provider: {self.provider!r}. "
-                "Use 'openai', 'anthropic', 'local', or 'auto'."
-            )
+        raise ValueError(
+            f"Unsupported LLM provider: {self.provider!r}. "
+            "Use 'openai', 'anthropic', 'local', or 'auto'."
+        )
 
     def get_model(self):
         """Return the underlying LangChain model for use in chains."""
         return self.model
-
-    async def ainvoke(self, prompt: str, context: Optional[dict] = None) -> str:
-        """
-        Generate a response from the LLM asynchronously.
-        """
-        try:
-            full_prompt = self._build_prompt(prompt, context)
-            response = await self.model.ainvoke(full_prompt)
-            return response.content if hasattr(response, "content") else str(response)
-        except Exception as e:
-            err_msg = str(e).lower()
-            if "rate" in err_msg or "limit" in err_msg:
-                raise RuntimeError("LLM rate limit exceeded. Please try again later.") from e
-            if "timeout" in err_msg or "timed out" in err_msg:
-                raise RuntimeError("LLM request timed out. Please try again.") from e
-            raise RuntimeError(f"LLM invocation failed: {str(e)}") from e
-
-    async def generate_response(self, prompt: str, context: Optional[dict] = None) -> str:
-        """
-        Generate a response from the LLM asynchronously.
-        Alias for ainvoke for backward compatibility.
-        """
-        return await self.ainvoke(prompt, context)
-
-    def invoke(self, prompt: str, context: Optional[dict] = None) -> str:
-        """
-        Generate a response from the LLM synchronously.
-        """
-        try:
-            full_prompt = self._build_prompt(prompt, context)
-            response = self.model.invoke(full_prompt)
-            return response.content if hasattr(response, "content") else str(response)
-        except Exception as e:
-            raise RuntimeError(f"LLM invocation failed: {str(e)}") from e
-
-    def _build_prompt(self, prompt: str, context: Optional[dict] = None) -> str:
-        """
-        Build the full prompt with system context.
-        """
-        system_prompt = """You are a helpful AI assistant for appointment booking.
-        Be friendly, professional, and concise. Help users schedule appointments by collecting:
-        - Date
-        - Time
-        - Service type
-
-        Ask for missing information naturally in the conversation."""
-
-        if context:
-            context_str = "\n".join([f"{k}: {v}" for k, v in context.items()])
-            return f"{system_prompt}\n\nContext:\n{context_str}\n\nUser: {prompt}\nAssistant:"
-
-        return f"{system_prompt}\n\nUser: {prompt}\nAssistant:"

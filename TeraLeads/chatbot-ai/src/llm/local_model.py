@@ -1,36 +1,26 @@
 """
-A deterministic chat model that runs with no API key.
+A deterministic LangChain chat model that needs no API key.
 
-The service could not start without OPENAI_API_KEY: LLMProvider raised in its
-constructor, and the constructor runs at import. That put the parts of this
-system that are actually interesting — the slot-filling conversation, the
-availability check, the double-booking guard, the backend hand-off — behind a
-billing relationship, and made the test suite unrunnable for anyone cloning it.
-
-This is a real LangChain chat model, not a stub returning a fixed string. It
-implements the two things `appointment_flow` asks of a model:
+It implements the two things `appointment_flow` asks of a model:
 
 1. `invoke`/`ainvoke` for conversational replies, and
 2. `with_structured_output(AppointmentExtraction)` for pulling a date, a time
    and a service type out of what the user typed.
 
-It does the second with explicit patterns rather than inference. Where a model
-would guess, this abstains and leaves the field empty, which makes the flow ask
-for it — the correct behaviour for a booking assistant that must not invent an
-appointment time.
+Extraction uses explicit patterns rather than inference. Where a model would
+guess, this abstains and leaves the field empty, which makes the flow ask for
+it: a booking assistant must not invent an appointment time.
 
-What this proves: the conversation state machine, slot filling, availability,
-persistence and the backend call all work end to end. What it does not prove:
-how the system handles phrasing nobody anticipated. That is what the real model
-is for, and it is why this sits behind the same interface rather than replacing
-anything.
+It exercises the whole conversation, availability and booking path offline.
+Phrasing it has no pattern for is answered with a follow-up question; handling
+that gracefully is what a hosted model behind the same interface is for.
 """
 
 from __future__ import annotations
 
 import re
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Type
+from typing import Any, List, Optional, Type
 
 from langchain_core.callbacks import CallbackManagerForLLMRun
 from langchain_core.language_models import BaseChatModel
@@ -248,7 +238,9 @@ def compose_reply(text: str, today: Optional[datetime] = None) -> str:
 # -------------------------------------------------------------- the model
 
 
-class LocalChatModel(BaseChatModel):
+# BaseChatModel._stream only raises NotImplementedError; LangChain falls back to
+# _generate for streaming callers, which is all a rule-based reply needs.
+class LocalChatModel(BaseChatModel):  # pylint: disable=abstract-method
     """A LangChain chat model backed by rules instead of a network call."""
 
     model_name: str = "local-rules-v1"

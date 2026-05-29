@@ -3,7 +3,7 @@ Tests for LLM Provider
 """
 import os
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import patch
 
 
 @pytest.fixture(autouse=True)
@@ -27,24 +27,6 @@ def test_llm_provider_unsupported_provider():
         with pytest.raises(ValueError, match="Unsupported"):
             from llm.provider import LLMProvider
             LLMProvider()
-
-
-@pytest.mark.asyncio
-async def test_llm_provider_ainvoke():
-    """Test ainvoke returns response content."""
-    with patch.dict(os.environ, {"OPENAI_API_KEY": "test", "LLM_PROVIDER": "openai"}):
-        from llm.provider import LLMProvider
-
-        mock_response = MagicMock()
-        mock_response.content = "Hello from AI"
-
-        with patch.object(LLMProvider, "_initialize_model") as mock_init:
-            mock_init.return_value = MagicMock(
-                ainvoke=AsyncMock(return_value=mock_response),
-            )
-            provider = LLMProvider()
-            result = await provider.ainvoke("Hello")
-            assert result == "Hello from AI"
 
 
 def test_llm_provider_get_model():

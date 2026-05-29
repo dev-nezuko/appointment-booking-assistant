@@ -26,6 +26,9 @@ good-names=i,j,k,ex,Run,_,id,db
 # Maximum number of arguments
 max-args=7
 
+# The local model's extractors return as soon as a pattern matches
+max-returns=8
+
 # Maximum number of attributes
 max-attributes=10
 

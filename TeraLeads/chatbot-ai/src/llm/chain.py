@@ -2,9 +2,9 @@
 LangChain chain setup for conversation.
 Uses LCEL with langchain_core for compatibility across LangChain versions.
 """
-from typing import Optional, List
+from typing import List
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain_core.messages import HumanMessage, AIMessage, BaseMessage
+from langchain_core.messages import BaseMessage
 
 
 class ConversationChainWrapper:
@@ -34,14 +34,6 @@ class ConversationChainWrapper:
             messages = getattr(self.memory, "_messages", [])
         return list(messages) if messages else []
 
-    def predict(self, input_text: str) -> str:
-        """Generate a response (synchronous)."""
-        result = self.chain.invoke({
-            "input": input_text,
-            "chat_history": self._get_messages(),
-        })
-        return result.content if hasattr(result, "content") else str(result)
-
     async def apredict(self, input_text: str) -> str:
         """Generate a response (asynchronous)."""
         result = await self.chain.ainvoke({
@@ -49,7 +41,3 @@ class ConversationChainWrapper:
             "chat_history": self._get_messages(),
         })
         return result.content if hasattr(result, "content") else str(result)
-
-    def get_memory(self):
-        """Get the conversation memory."""
-        return self.memory

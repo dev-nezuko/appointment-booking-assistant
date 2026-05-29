@@ -23,7 +23,10 @@ class AppointmentExtraction(BaseModel):
 
     date: Optional[str] = Field(
         default=None,
-        description="Appointment date in YYYY-MM-DD format. Use today's date for 'today', tomorrow for 'tomorrow'.",
+        description=(
+            "Appointment date in YYYY-MM-DD format. "
+            "Use today's date for 'today', tomorrow for 'tomorrow'."
+        ),
     )
     time: Optional[str] = Field(
         default=None,
@@ -112,7 +115,7 @@ class AppointmentFlow:
         return f"{hour:02d}:{minute:02d}:00"
 
     async def _extract_with_llm(
-        self, message: str, state: Dict[str, Any], session_id: str
+        self, message: str, state: Dict[str, Any]
     ) -> AppointmentExtraction:
         """Extract appointment data using LLM."""
         extraction_model = self._get_extraction_model()
@@ -154,7 +157,8 @@ class AppointmentFlow:
 
 User: {message}
 
-Respond in a friendly, professional way. If booking an appointment, ask for any missing info (date, time, type)."""
+Respond in a friendly, professional way. If booking an appointment, ask for any
+missing info (date, time, type)."""
         return await chain.apredict(prompt)
 
     async def process_message(
@@ -209,7 +213,7 @@ Respond in a friendly, professional way. If booking an appointment, ask for any 
         an empty turn makes the assistant ask again instead of failing the chat.
         """
         try:
-            return await self._extract_with_llm(message, state, session_id)
+            return await self._extract_with_llm(message, state)
         except ValueError as exc:
             logger.warning("extraction failed for session %s: %s", session_id, exc)
             return AppointmentExtraction()
