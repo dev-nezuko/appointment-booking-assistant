@@ -1,19 +1,22 @@
 """
 Appointment scheduling flow using LangChain with LLM-powered extraction
 """
+import logging
 import re
 from datetime import datetime, timedelta
-from typing import Dict, Any, Tuple, Optional
+from typing import Dict, Any, List, Tuple, Optional
 from pydantic import BaseModel, Field
 from langchain_core.prompts import ChatPromptTemplate
 
 from llm.provider import LLMProvider
 from llm.chain import ConversationChainWrapper
 from conversation.memory import ConversationMemory
-from utils.availability import check_availability
+from utils.availability import check_availability, get_available_slots
 from storage.appointment_store import AppointmentStore
 from storage.log_store import LogStore
 from services.backend_client import BackendClient
+
+logger = logging.getLogger("chatbot_ai")
 
 
 class AppointmentExtraction(BaseModel):
@@ -63,10 +66,10 @@ class AppointmentFlow:
         """Get LLM with structured output for extraction."""
         return self.llm_provider.get_model().with_structured_output(AppointmentExtraction)
 
-    def _normalize_date(self, date_str: str) -> str:
-        """Normalize date string to YYYY-MM-DD."""
+    def _normalize_date(self, date_str: str) -> Optional[str]:
+        """Normalize a date to YYYY-MM-DD, or None when it cannot be read."""
         if not date_str:
-            return ""
+            return None
         date_str = date_str.strip()
         # Handle relative dates
         today = datetime.now().date()
@@ -87,28 +90,29 @@ class AppointmentFlow:
                 return parsed.strftime("%Y-%m-%d")
             except ValueError:
                 continue
-        return date_str
+        # An unreadable date ("next-ish week") is treated as missing so the
+        # assistant asks again, rather than failing the availability check and
+        # telling the user the slot is taken.
+        return None
 
-    def _normalize_time(self, time_str: str) -> str:
-        """Normalize time string to HH:MM:SS."""
+    def _normalize_time(self, time_str: str) -> Optional[str]:
+        """Normalize a time to HH:MM:SS, or None when it cannot be read."""
         if not time_str:
-            return ""
+            return None
         time_str = time_str.strip()
-        # Already HH:MM:SS
-        if re.match(r"^\d{1,2}:\d{2}:\d{2}$", time_str):
-            return time_str
-        # HH:MM
-        match = re.search(r"(\d{1,2}):?(\d{2})?\s*(am|pm|AM|PM)?", time_str)
-        if match:
-            hour = int(match.group(1))
-            minute = int(match.group(2) or 0)
-            period = (match.group(3) or "").lower()
-            if period == "pm" and hour != 12:
-                hour += 12
-            elif period == "am" and hour == 12:
-                hour = 0
-            return f"{hour:02d}:{minute:02d}:00"
-        return time_str
+        match = re.search(r"(\d{1,2})(?::(\d{2}))?(?::\d{2})?\s*(am|pm)?", time_str, re.I)
+        if not match:
+            return None
+        hour = int(match.group(1))
+        minute = int(match.group(2) or 0)
+        period = (match.group(3) or "").lower()
+        if period == "pm" and hour != 12:
+            hour += 12
+        elif period == "am" and hour == 12:
+            hour = 0
+        if hour > 23 or minute > 59:
+            return None
+        return f"{hour:02d}:{minute:02d}:00"
 
     async def _extract_with_llm(
         self, message: str, state: Dict[str, Any], session_id: str
@@ -163,161 +167,171 @@ Respond in a friendly, professional way. If booking an appointment, ask for any 
         state: Dict[str, Any],
         user_id: Optional[int] = None,
     ) -> Tuple[str, Dict[str, Any]]:
-        """
-        Process a user message and return response with metadata.
-        """
-        # Add user message to state (and sync to memory)
-        state["messages"].append({
-            "role": "user",
-            "content": message,
-            "timestamp": datetime.now().isoformat(),
-        })
-        if self.state_manager.conversation_memory:
-            self.state_manager.conversation_memory.add_user_message(session_id, message)
+        """Run one user turn through slot filling, availability and booking."""
+        self._remember(session_id, state, "user", message)
 
-        # Extract appointment information using LLM
-        try:
-            extraction = await self._extract_with_llm(message, state, session_id)
-            appointment_data = {}
-            if extraction.date:
-                appointment_data["date"] = self._normalize_date(extraction.date)
-            if extraction.time:
-                appointment_data["time"] = self._normalize_time(extraction.time)
-            if extraction.service_type:
-                appointment_data["service_type"] = extraction.service_type.strip()
+        extraction = await self._safe_extract(message, state, session_id)
+        updates = self._fields_from(extraction)
+        details = state["appointment_data"]
+        changed = any(details.get(key) != value for key, value in updates.items())
+        details.update(updates)
 
-            # Handle confirmation intent (yes, correct, etc.)
-            message_lower = message.lower().strip()
-            is_affirmative = message_lower in (
-                "yes", "yeah", "yep", "correct", "sounds good",
-                "that's right", "confirm", "book it", "please"
-            )
-            existing = state.get("appointment_data", {})
-            has_all_data = all(existing.get(f) for f in self.required_fields)
-            if (extraction.intent == "confirm" or is_affirmative) and has_all_data:
-                return await self._handle_confirmation(
-                    session_id, state, user_id
-                )
-        except (RuntimeError, ValueError, Exception) as e:
-            # Log and fall back to empty extraction on LLM/structure errors
-            appointment_data = {}
+        confirming = extraction.intent == "confirm" or _is_affirmative(message)
+        missing_fields = [f for f in self.required_fields if not details.get(f)]
 
-        state["appointment_data"].update(appointment_data)
-
-        # Check if we have all required information
-        missing_fields = [
-            f for f in self.required_fields
-            if not state["appointment_data"].get(f)
-        ]
-
-        if missing_fields:
-            response = await self._generate_response_with_llm(
-                message, state, session_id
-            )
+        # Only book when the user is agreeing to the exact summary we read back
+        # to them. "Yes, but make it 3pm" changes the details, so it gets a new
+        # summary instead of a booking for a time nobody confirmed.
+        agreed = confirming and state.get("awaiting_confirmation") and not changed
+        if agreed and not missing_fields:
+            response, metadata = await self._book(session_id, state, user_id)
+        elif missing_fields:
+            state["awaiting_confirmation"] = False
+            response = await self._generate_response_with_llm(message, state, session_id)
             metadata = {"status": "collecting_info", "missing_fields": missing_fields}
+        elif await check_availability(details["date"], details["time"], self.appointment_store):
+            state["awaiting_confirmation"] = True
+            response = self._generate_confirmation_message(state)
+            metadata = {"status": "ready_to_book", "appointment_data": dict(details)}
         else:
-            date = state["appointment_data"]["date"]
-            time = state["appointment_data"]["time"]
-            is_available = await check_availability(
-                date, time, self.appointment_store
-            )
+            response, metadata = self._slot_unavailable(state)
 
-            if is_available:
-                response = self._generate_confirmation_message(state)
-                metadata = {
-                    "status": "ready_to_book",
-                    "appointment_data": state["appointment_data"],
-                }
-            else:
-                response = await self._generate_alternative_times_message(
-                    state, session_id
-                )
-                metadata = {"status": "unavailable", "suggest_alternatives": True}
-
-        # Add bot response to state
-        state["messages"].append({
-            "role": "assistant",
-            "content": response,
-            "timestamp": datetime.now().isoformat(),
-        })
-        if self.state_manager.conversation_memory:
-            self.state_manager.conversation_memory.add_ai_message(
-                session_id, response
-            )
-
-        # Log to conversation store
+        self._remember(session_id, state, "assistant", response)
         if user_id:
-            self.log_store.log_conversation(
-                session_id, user_id, message, response, metadata
-            )
-
+            self.log_store.log_conversation(session_id, user_id, message, response, metadata)
         return response, metadata
 
-    async def _handle_confirmation(
+    async def _safe_extract(
+        self, message: str, state: Dict[str, Any], session_id: str
+    ) -> AppointmentExtraction:
+        """
+        Structured extraction, degrading to "nothing understood" on bad output.
+
+        A hosted model occasionally returns output that does not fit the schema
+        (LangChain raises OutputParserException, a ValueError). Treating that as
+        an empty turn makes the assistant ask again instead of failing the chat.
+        """
+        try:
+            return await self._extract_with_llm(message, state, session_id)
+        except ValueError as exc:
+            logger.warning("extraction failed for session %s: %s", session_id, exc)
+            return AppointmentExtraction()
+
+    def _fields_from(self, extraction: AppointmentExtraction) -> Dict[str, str]:
+        fields: Dict[str, str] = {}
+        date = self._normalize_date(extraction.date or "")
+        time = self._normalize_time(extraction.time or "")
+        if date:
+            fields["date"] = date
+        if time:
+            fields["time"] = time
+        if extraction.service_type and extraction.service_type.strip():
+            fields["service_type"] = extraction.service_type.strip()
+        return fields
+
+    def _remember(self, session_id: str, state: Dict[str, Any], role: str, content: str) -> None:
+        state["messages"].append({
+            "role": role,
+            "content": content,
+            "timestamp": datetime.now().isoformat(),
+        })
+        memory = self.state_manager.conversation_memory
+        if memory:
+            if role == "user":
+                memory.add_user_message(session_id, content)
+            else:
+                memory.add_ai_message(session_id, content)
+
+    async def _book(
         self,
         session_id: str,
         state: Dict[str, Any],
         user_id: Optional[int],
     ) -> Tuple[str, Dict[str, Any]]:
-        """Handle user confirmation and book appointment."""
-        appointment = state["appointment_data"].copy()
+        """Book the confirmed slot, re-checking it first."""
+        details = state["appointment_data"]
+        # The slot was free when we read the summary back, but another session
+        # may have taken it while the user was deciding.
+        if not await check_availability(details["date"], details["time"], self.appointment_store):
+            return self._slot_unavailable(state)
+
+        appointment = dict(details)
         if user_id:
             appointment["user_id"] = user_id
         appointment["session_id"] = session_id
-
         appointment_id = self.appointment_store.save(appointment)
+        await self.backend_client.sync_appointment(appointment)
 
-        # Try to sync to backend
-        synced = await self.backend_client.sync_appointment(appointment)
-        if not synced:
-            # Store locally anyway - backend may sync later
-            pass
+        # Start the next request from a clean slate, so a second "yes" cannot
+        # book the same slot again.
+        state["appointment_data"] = {}
+        state["awaiting_confirmation"] = False
 
         response = (
-            f"Your appointment has been confirmed! "
-            f"Date: {appointment.get('date')}, Time: {appointment.get('time')}, "
-            f"Service: {appointment.get('service_type', 'appointment')}. "
-            f"Confirmation ID: {appointment_id}. "
+            "Your appointment has been confirmed! "
+            f"Date: {appointment['date']}, Time: {appointment['time']}, "
+            f"Service: {appointment['service_type']}. "
+            f"Confirmation ID: {appointment_id}."
         )
-        state["messages"].append({
-            "role": "assistant",
-            "content": response,
-            "timestamp": datetime.now().isoformat(),
-        })
-        if self.state_manager.conversation_memory:
-            self.state_manager.conversation_memory.add_ai_message(
-                session_id, response
-            )
-
         metadata = {
             "status": "booked",
             "appointment_id": appointment_id,
             "appointment_data": appointment,
         }
-        if user_id:
-            self.log_store.log_conversation(
-                session_id, user_id,
-                "confirmed",
-                response,
-                metadata,
-            )
         return response, metadata
 
+    def _slot_unavailable(self, state: Dict[str, Any]) -> Tuple[str, Dict[str, Any]]:
+        """Drop the rejected time and offer real open slots on the same day."""
+        details = state["appointment_data"]
+        date = details.get("date")
+        details.pop("time", None)
+        state["awaiting_confirmation"] = False
+
+        alternatives = self._open_slots(date) if date else []
+        if alternatives:
+            listed = ", ".join(slot[:5] for slot in alternatives)
+            response = (
+                f"I'm sorry, that time is not available. On {date} I can offer {listed}. "
+                "Which would you like, or would you prefer another day?"
+            )
+        else:
+            response = (
+                "I'm sorry, that time is not available, and I have nothing open that day. "
+                "Could you suggest another date? Appointments run from 09:00 to 17:00."
+            )
+        metadata = {
+            "status": "unavailable",
+            "missing_fields": ["time"],
+            "alternatives": alternatives,
+        }
+        return response, metadata
+
+    def _open_slots(self, date: str, limit: int = 4) -> List[str]:
+        try:
+            if datetime.strptime(date, "%Y-%m-%d").date() < datetime.now().date():
+                return []
+        except ValueError:
+            return []
+        free = [
+            slot for slot in get_available_slots()
+            if self.appointment_store.is_slot_available(date, slot)
+        ]
+        return free[:limit]
+
     def _generate_confirmation_message(self, state: Dict[str, Any]) -> str:
-        """Generate appointment confirmation message."""
         apt = state["appointment_data"]
         return (
             f"Great! I have you scheduled for {apt.get('date')} "
             f"at {apt.get('time')} for a {apt.get('service_type', 'appointment')}. "
-            f"Is this correct?"
+            "Is this correct?"
         )
 
-    async def _generate_alternative_times_message(
-        self, state: Dict[str, Any], session_id: str
-    ) -> str:
-        """Generate message suggesting alternative times."""
-        return (
-            "I'm sorry, that time slot is not available. "
-            "Would you like to try a different date or time? "
-            "I can check availability for you."
-        )
+
+_AFFIRMATIVE = {
+    "yes", "yeah", "yep", "correct", "sounds good", "that's right",
+    "confirm", "book it", "please", "yes please", "ok", "okay",
+}
+
+
+def _is_affirmative(message: str) -> bool:
+    return message.lower().strip().rstrip(".!") in _AFFIRMATIVE

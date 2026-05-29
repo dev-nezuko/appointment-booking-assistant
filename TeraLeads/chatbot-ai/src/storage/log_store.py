@@ -20,8 +20,10 @@ class LogStore:
     Supports querying by session_id, date range, user_id.
     """
 
-    def __init__(self, data_dir: str = "data", filename: str = "conversations.json"):
-        self.data_dir = Path(os.getenv("DATA_DIR", data_dir))
+    def __init__(self, data_dir: Optional[str] = None, filename: str = "conversations.json"):
+        # An explicit directory wins over DATA_DIR, so tests and tools can point
+        # a store somewhere without touching the environment.
+        self.data_dir = Path(data_dir or os.getenv("DATA_DIR", "data"))
         self.filepath = self.data_dir / filename
         self._ensure_data_dir()
 
