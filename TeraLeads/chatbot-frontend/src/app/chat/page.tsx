@@ -4,17 +4,19 @@ import Link from 'next/link'
 import { ChatInterface } from '@/components/Chat/ChatInterface'
 import { ProtectedRoute } from '@/components/Auth/ProtectedRoute'
 import { useAppSelector } from '@/hooks/useAppSelector'
-import { logout } from '@/api/auth'
+import { clearStoredToken } from '@/api/auth'
 import { useAppDispatch } from '@/hooks/useAppDispatch'
-import { logout as logoutRedux } from '@/state/slices/authSlice'
+import { logout } from '@/state/slices/authSlice'
+import { clearChat } from '@/state/slices/chatSlice'
 
 export default function ChatPage() {
   const dispatch = useAppDispatch()
   const user = useAppSelector((state) => state.auth.user)
 
   const handleLogout = () => {
-    dispatch(logoutRedux())
-    logout()
+    clearStoredToken()
+    dispatch(clearChat())
+    dispatch(logout())
   }
 
   return (

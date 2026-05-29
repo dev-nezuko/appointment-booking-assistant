@@ -1,4 +1,6 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios'
+import { store } from '@/state/store'
+import { logout } from '@/state/slices/authSlice'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 
@@ -21,13 +23,12 @@ apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 apiClient.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
-    // An expired or revoked token: drop it and send the user to sign in again,
-    // unless they are already there (a failed login is also a 401).
+    // An expired or revoked token: drop it and end the session; ProtectedRoute
+    // then sends the user to sign in. A failed login is also a 401, and there
+    // is no session to end then.
     if (error.response?.status === 401 && typeof window !== 'undefined') {
       localStorage.removeItem('token')
-      if (window.location.pathname !== '/login') {
-        window.location.href = '/login'
-      }
+      store.dispatch(logout())
     }
     return Promise.reject(error)
   }

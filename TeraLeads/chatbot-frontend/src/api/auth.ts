@@ -71,9 +71,10 @@ export async function signup(
   )
 }
 
-export function logout(): void {
+/** Forget the stored token. Callers also clear the Redux session, which makes
+ * ProtectedRoute send the user to /login. */
+export function clearStoredToken(): void {
   if (typeof window !== 'undefined') {
     localStorage.removeItem('token')
-    window.location.href = '/login'
   }
 }

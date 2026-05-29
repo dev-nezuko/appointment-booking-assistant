@@ -1,6 +1,6 @@
 # Multi-stage Dockerfile for Next.js Frontend
 # Stage 1: Dependencies
-FROM node:18-alpine AS deps
+FROM node:22-alpine AS deps
 WORKDIR /app
 
 # Copy package files
@@ -10,7 +10,7 @@ COPY package.json package-lock.json* ./
 RUN npm ci --include=dev
 
 # Stage 2: Builder
-FROM node:18-alpine AS builder
+FROM node:22-alpine AS builder
 WORKDIR /app
 
 # Copy dependencies from deps stage
@@ -18,9 +18,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # NEXT_PUBLIC_* values are inlined into the client bundle by `npm run build`,
-# so they have to exist at build time. Passing them as runtime environment
-# variables — as the compose file did — has no effect on the shipped JS: the
-# browser kept calling whatever URL was baked in.
+# so they must be set here, at build time; runtime env has no effect on them.
 ARG NEXT_PUBLIC_API_URL=http://localhost:3401
 ARG NEXT_PUBLIC_WS_URL=ws://localhost:3401
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
@@ -33,7 +31,7 @@ ENV NODE_ENV=production
 RUN npm run build
 
 # Stage 3: Runner
-FROM node:18-alpine AS runner
+FROM node:22-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
@@ -58,8 +56,5 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# `.next/standalone` was copied to /app above, so the server entry point lands
-# at /app/server.js. Pointing at .next/standalone/server.js — the path inside
-# the *builder* — would not resolve in this stage.
 CMD ["node", "server.js"]
 

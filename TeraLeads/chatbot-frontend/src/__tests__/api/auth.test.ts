@@ -4,7 +4,7 @@
  * Tests for authentication functions including login and signup.
  */
 
-import { login, signup, logout, AuthenticationError } from '@/api/auth'
+import { login, signup, clearStoredToken, AuthenticationError } from '@/api/auth'
 import { apiClient } from '@/api/client'
 import { AxiosError, InternalAxiosRequestConfig } from 'axios'
 
@@ -88,10 +88,11 @@ describe('Authentication API', () => {
     })
   })
 
-  describe('logout', () => {
-    it('should redirect to login', () => {
-      logout()
-      expect(window.location.href).toBe('/login')
+  describe('clearStoredToken', () => {
+    it('removes the stored token', () => {
+      localStorage.setItem('token', 'abc')
+      clearStoredToken()
+      expect(localStorage.getItem('token')).toBeNull()
     })
   })
 })
