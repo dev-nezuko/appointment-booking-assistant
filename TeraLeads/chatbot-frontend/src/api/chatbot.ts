@@ -7,6 +7,7 @@
 
 import { apiClient } from './client'
 import { AxiosError } from 'axios'
+import type { Booking } from '@/state/slices/chatSlice'
 
 /**
  * Structure representing a chat message
@@ -24,6 +25,7 @@ export interface ChatMessage {
 export interface ChatResponse {
   message: string
   sessionId: string
+  booking: Booking | null
 }
 
 /**

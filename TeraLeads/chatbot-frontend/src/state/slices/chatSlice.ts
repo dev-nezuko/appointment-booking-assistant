@@ -10,10 +10,19 @@ export interface Message {
 export type ConnectionStatus = 'connected' | 'disconnected' | 'connecting' | 'error'
 
 export interface AppointmentInfo {
+  id?: number
   date: string
-  time: string
-  type?: string
-  status?: string
+  time: string | null
+  type?: string | null
+}
+
+export type BookingStatus = 'collecting_info' | 'ready_to_book' | 'unavailable' | 'booked'
+
+export interface Booking {
+  status: BookingStatus
+  missingFields: string[]
+  alternatives: string[]
+  appointment: AppointmentInfo | null
 }
 
 interface ChatState {
@@ -22,7 +31,7 @@ interface ChatState {
   isLoading: boolean
   connectionStatus: ConnectionStatus
   error: string | null
-  pendingAppointment: AppointmentInfo | null
+  booking: Booking | null
 }
 
 const initialState: ChatState = {
@@ -31,7 +40,7 @@ const initialState: ChatState = {
   isLoading: false,
   connectionStatus: 'disconnected',
   error: null,
-  pendingAppointment: null,
+  booking: null,
 }
 
 const chatSlice = createSlice({
@@ -56,14 +65,14 @@ const chatSlice = createSlice({
     setError: (state, action: PayloadAction<string | null>) => {
       state.error = action.payload
     },
-    setPendingAppointment: (state, action: PayloadAction<AppointmentInfo | null>) => {
-      state.pendingAppointment = action.payload
+    setBooking: (state, action: PayloadAction<Booking | null>) => {
+      state.booking = action.payload
     },
     clearChat: (state) => {
       state.messages = []
       state.sessionId = null
       state.error = null
-      state.pendingAppointment = null
+      state.booking = null
     },
   },
 })
@@ -75,7 +84,7 @@ export const {
   setLoading,
   setConnectionStatus,
   setError,
-  setPendingAppointment,
+  setBooking,
   clearChat,
 } = chatSlice.actions
 export default chatSlice.reducer

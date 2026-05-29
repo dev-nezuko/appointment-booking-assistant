@@ -15,7 +15,7 @@ describe('chatSlice', () => {
     isLoading: false,
     connectionStatus: 'disconnected' as const,
     error: null,
-    pendingAppointment: null,
+    booking: null,
   }
 
   it('should return initial state', () => {
@@ -81,7 +81,12 @@ describe('chatSlice', () => {
       isLoading: false,
       connectionStatus: 'connected' as const,
       error: 'error',
-      pendingAppointment: { date: '2024-01-01', time: '10:00' },
+      booking: {
+        status: 'booked' as const,
+        missingFields: [],
+        alternatives: [],
+        appointment: { date: '2024-01-01', time: '10:00' },
+      },
     }
     const actual = chatReducer(stateWithData, clearChat())
 
