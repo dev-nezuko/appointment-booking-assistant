@@ -1,0 +1,29 @@
+# Git
+.git
+.gitignore
+
+# Documentation
+*.md
+README.md
+DOCKER.md
+CODE_QUALITY.md
+
+# Docker files
+docker-compose.yml
+.dockerignore
+Dockerfile
+
+# Environment
+.env
+.env*.local
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+

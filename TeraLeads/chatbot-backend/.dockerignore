@@ -1,0 +1,47 @@
+# Dependencies
+node_modules
+# package-lock.json is deliberately NOT ignored. This is an application,
+# not a library: the lockfile is what makes a build reproducible, and the
+# Dockerfile's `npm ci` requires it. Ignoring it here while requiring it
+# there is why the backend image could never build.
+
+# Environment variables
+.env
+.env*.local
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Testing
+coverage
+.nyc_output
+__tests__
+*.test.js
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+# Documentation
+README.md
+*.md
+
