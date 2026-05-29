@@ -23,14 +23,11 @@ TOMORROW = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
 def flow(tmp_path, monkeypatch):
     monkeypatch.setenv("LLM_PROVIDER", "local")
     states = ConversationStateManager(conversation_memory=ConversationMemory())
-    backend = AsyncMock()
-    backend.sync_appointment.return_value = False
     return AppointmentFlow(
         llm_provider=LLMProvider(),
         state_manager=states,
         appointment_store=AppointmentStore(data_dir=str(tmp_path)),
         log_store=LogStore(data_dir=str(tmp_path)),
-        backend_client=backend,
     )
 
 

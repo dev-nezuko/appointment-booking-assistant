@@ -23,7 +23,14 @@ function hasOverlap(start1, dur1, start2, dur2) {
 }
 
 const createAppointment = async (userId, appointmentData, businessId = null) => {
-  const { date, time, duration_minutes = 60, service_type, notes } = appointmentData
+  const {
+    date,
+    time,
+    duration_minutes = 60,
+    service_type,
+    notes,
+    status = 'pending',
+  } = appointmentData
 
   const isAvailable = await checkAvailability(date, time, duration_minutes)
   if (!isAvailable) {
@@ -37,7 +44,7 @@ const createAppointment = async (userId, appointmentData, businessId = null) => 
     time,
     duration_minutes,
     service_type,
-    status: 'pending',
+    status,
     notes,
   })
   return appointment

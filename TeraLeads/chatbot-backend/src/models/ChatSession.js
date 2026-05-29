@@ -57,6 +57,13 @@ class ChatSession {
     return result.rows
   }
 
+  static async linkAppointment(sessionId, appointmentId) {
+    await pool.query('UPDATE chat_sessions SET appointment_id = $1 WHERE id = $2', [
+      appointmentId,
+      sessionId,
+    ])
+  }
+
   static async addMessage(sessionId, messageData) {
     const query = `
       UPDATE chat_sessions

@@ -27,7 +27,6 @@ from flows.appointment_flow import AppointmentFlow
 from llm.provider import LLMProvider
 from storage.appointment_store import AppointmentStore
 from storage.log_store import LogStore
-from services.backend_client import BackendClient
 from utils.logger import setup_logger
 
 # Load environment variables
@@ -61,13 +60,11 @@ try:
     state_manager = ConversationStateManager(conversation_memory=conversation_memory)
     appointment_store = AppointmentStore()
     log_store = LogStore()
-    backend_client = BackendClient()
     appointment_flow = AppointmentFlow(
         llm_provider=llm_provider,
         state_manager=state_manager,
         appointment_store=appointment_store,
         log_store=log_store,
-        backend_client=backend_client,
     )
 except Exception as e:
     logger.error("Failed to initialize components: %s", str(e))

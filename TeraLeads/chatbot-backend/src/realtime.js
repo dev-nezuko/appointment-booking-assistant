@@ -64,7 +64,7 @@ const attachRealtime = (httpServer) => {
           sender: 'bot',
           timestamp: new Date().toISOString(),
           sessionId: result.sessionId,
-          appointmentData: result.appointmentData,
+          booking: result.booking,
         })
       } catch (err) {
         logger.error?.({ action: 'ws_message_failed', error: err.message })

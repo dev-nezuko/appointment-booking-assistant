@@ -1,15 +1,33 @@
 /**
- * Client for the Python AI microservice.
- *
- * The backend had a `// TODO: Forward message to AI microservice` and returned
- * a hardcoded placeholder string, so the three-service architecture the README
- * describes was never actually connected: the browser talked to this backend,
- * and this backend talked to nobody. Every message in the UI came back as
- * "This is a placeholder response. AI service integration pending."
+ * Client for the Python AI microservice, which owns the conversation and
+ * reports where the booking stands in `metadata`.
  */
 
 const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://ai-service:8000'
 const TIMEOUT_MS = Number(process.env.AI_SERVICE_TIMEOUT_MS || 15000)
+
+/**
+ * Reshape the AI service's metadata into what the browser renders. Times are
+ * trimmed to HH:MM because that is how people read them.
+ */
+const toBooking = (metadata) => {
+  if (!metadata || !metadata.status) {
+    return null
+  }
+  const details = metadata.appointment_data || {}
+  return {
+    status: metadata.status,
+    missingFields: metadata.missing_fields || [],
+    alternatives: (metadata.alternatives || []).map((slot) => String(slot).slice(0, 5)),
+    appointment: details.date
+      ? {
+          date: details.date,
+          time: details.time ? String(details.time).slice(0, 5) : null,
+          type: details.service_type || null,
+        }
+      : null,
+  }
+}
 
 /**
  * Send one turn to the AI service.
@@ -44,7 +62,7 @@ const sendMessage = async ({ sessionId, message, userId }) => {
     const body = await res.json()
     return {
       message: body.response,
-      appointmentData: body.appointment_data || null,
+      booking: toBooking(body.metadata),
     }
   } catch (err) {
     if (err.name === 'AbortError') {
@@ -52,11 +70,13 @@ const sendMessage = async ({ sessionId, message, userId }) => {
       error.statusCode = 504
       throw error
     }
-    if (!err.statusCode) err.statusCode = 502
+    if (!err.statusCode) {
+      err.statusCode = 502
+    }
     throw err
   } finally {
     clearTimeout(timer)
   }
 }
 
-module.exports = { sendMessage, AI_SERVICE_URL }
+module.exports = { sendMessage, toBooking, AI_SERVICE_URL }

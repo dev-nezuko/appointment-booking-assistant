@@ -1,15 +1,12 @@
 /**
- * Unit tests for the chat turn handler.
- *
- * The existing integration test mocks this service wholesale, so none of its
- * behaviour was covered. Two things are pinned here, both of which were broken:
- * that a turn is actually forwarded to the AI service (it used to return a
- * hardcoded placeholder), and that the browser's string session key does not
- * reach an integer primary key (it used to, and every message 500'd).
+ * Unit tests for the chat turn handler: forwarding to the AI service, session
+ * lookup by the browser's string key, and writing confirmed bookings to
+ * Postgres.
  */
 
 jest.mock('../../models/ChatSession')
 jest.mock('../../services/aiClient')
+jest.mock('../../services/appointment.service')
 jest.mock('../../utils/logger', () => ({
   info: jest.fn(),
   error: jest.fn(),
@@ -18,6 +15,7 @@ jest.mock('../../utils/logger', () => ({
 
 const ChatSession = require('../../models/ChatSession')
 const aiClient = require('../../services/aiClient')
+const appointmentService = require('../../services/appointment.service')
 const chatbotService = require('../../services/chatbot.service')
 
 const SESSION_KEY = 'session-1788185187684-o6q91ysip'
@@ -26,7 +24,7 @@ beforeEach(() => {
   jest.clearAllMocks()
   aiClient.sendMessage.mockResolvedValue({
     message: 'I have a Consultation. Could you tell me a date and a time?',
-    appointmentData: { service_type: 'Consultation' },
+    booking: { status: 'collecting_info', missingFields: ['date', 'time'], appointment: null },
   })
   ChatSession.addMessage.mockResolvedValue({})
 })
@@ -112,5 +110,69 @@ describe('sendMessage', () => {
 
     await expect(chatbotService.sendMessage(1, SESSION_KEY, 'hi')).rejects.toThrow('502')
     expect(ChatSession.addMessage).not.toHaveBeenCalled()
+  })
+
+  describe('when the assistant books a slot', () => {
+    const booked = {
+      message: 'Your appointment is booked.',
+      booking: {
+        status: 'booked',
+        missingFields: [],
+        alternatives: [],
+        appointment: { date: '2030-01-10', time: '11:00', type: 'Consultation' },
+      },
+    }
+
+    beforeEach(() => {
+      ChatSession.findBySessionKey.mockResolvedValue({ id: 7, user_id: 1 })
+      aiClient.sendMessage.mockResolvedValue(booked)
+    })
+
+    it('writes it to the appointments table as confirmed and links the session', async () => {
+      appointmentService.createAppointment.mockResolvedValue({ id: 31 })
+
+      const result = await chatbotService.sendMessage(1, SESSION_KEY, 'yes')
+
+      expect(appointmentService.createAppointment).toHaveBeenCalledWith(1, {
+        date: '2030-01-10',
+        time: '11:00',
+        service_type: 'Consultation',
+        status: 'confirmed',
+      })
+      expect(ChatSession.linkAppointment).toHaveBeenCalledWith(7, 31)
+      expect(result.booking.appointment.id).toBe(31)
+      expect(result.message).toBe('Your appointment is booked.')
+    })
+
+    it('tells the user when the calendar already holds that slot', async () => {
+      const conflict = new Error('Time slot is not available')
+      conflict.statusCode = 409
+      appointmentService.createAppointment.mockRejectedValue(conflict)
+
+      const result = await chatbotService.sendMessage(1, SESSION_KEY, 'yes')
+
+      expect(result.booking.status).toBe('unavailable')
+      expect(result.message).toMatch(/just been taken/)
+      expect(ChatSession.addMessage).toHaveBeenCalledWith(
+        7,
+        expect.objectContaining({ bot_response: result.message })
+      )
+    })
+
+    it('does not hide a database failure behind a friendly reply', async () => {
+      appointmentService.createAppointment.mockRejectedValue(new Error('connection refused'))
+
+      await expect(chatbotService.sendMessage(1, SESSION_KEY, 'yes')).rejects.toThrow(
+        'connection refused'
+      )
+    })
+  })
+
+  it('does not touch the appointments table while details are being collected', async () => {
+    ChatSession.findBySessionKey.mockResolvedValue({ id: 7, user_id: 1 })
+
+    await chatbotService.sendMessage(1, SESSION_KEY, 'I want a consultation')
+
+    expect(appointmentService.createAppointment).not.toHaveBeenCalled()
   })
 })

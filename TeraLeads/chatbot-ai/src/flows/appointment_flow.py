@@ -14,7 +14,6 @@ from conversation.memory import ConversationMemory
 from utils.availability import check_availability, get_available_slots
 from storage.appointment_store import AppointmentStore
 from storage.log_store import LogStore
-from services.backend_client import BackendClient
 
 logger = logging.getLogger("chatbot_ai")
 
@@ -52,13 +51,11 @@ class AppointmentFlow:
         state_manager,
         appointment_store: Optional[AppointmentStore] = None,
         log_store: Optional[LogStore] = None,
-        backend_client: Optional[BackendClient] = None,
     ):
         self.llm_provider = llm_provider
         self.state_manager = state_manager
         self.appointment_store = appointment_store or AppointmentStore()
         self.log_store = log_store or LogStore()
-        self.backend_client = backend_client or BackendClient()
         self.required_fields = ["date", "time", "service_type"]
         self.conversation_memory = ConversationMemory()
 
@@ -260,7 +257,6 @@ Respond in a friendly, professional way. If booking an appointment, ask for any 
             appointment["user_id"] = user_id
         appointment["session_id"] = session_id
         appointment_id = self.appointment_store.save(appointment)
-        await self.backend_client.sync_appointment(appointment)
 
         # Start the next request from a clean slate, so a second "yes" cannot
         # book the same slot again.
@@ -268,10 +264,8 @@ Respond in a friendly, professional way. If booking an appointment, ask for any 
         state["awaiting_confirmation"] = False
 
         response = (
-            "Your appointment has been confirmed! "
-            f"Date: {appointment['date']}, Time: {appointment['time']}, "
-            f"Service: {appointment['service_type']}. "
-            f"Confirmation ID: {appointment_id}."
+            f"You're booked: {appointment['service_type']} on {appointment['date']} "
+            f"at {appointment['time'][:5]}. Is there anything else I can help with?"
         )
         metadata = {
             "status": "booked",
