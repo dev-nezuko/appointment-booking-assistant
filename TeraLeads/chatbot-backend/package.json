@@ -21,24 +21,28 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "express": "^4.18.2",
-    "jsonwebtoken": "^9.0.2",
-    "dotenv": "^16.3.1",
-    "cors": "^2.8.5",
-    "body-parser": "^1.20.2",
-    "pg": "^8.11.3",
-    "bcryptjs": "^2.4.3",
-    "express-rate-limit": "^7.1.5",
-    "swagger-ui-express": "^5.0.0",
-    "swagger-jsdoc": "^6.2.8",
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.7.3",
+    "jsonwebtoken": "^9.0.3",
     "node-pg-migrate": "^6.2.2",
-    "socket.io": "^4.7.5"
+    "pg": "^8.23.1",
+    "socket.io": "^4.8.4",
+    "swagger-jsdoc": "^6.3.0",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
-    "nodemon": "^3.0.2",
-    "jest": "^29.7.0",
-    "eslint": "^8.54.0",
-    "supertest": "^6.3.3",
-    "prettier": "^3.0.0"
+    "@eslint/js": "^9.39.5",
+    "eslint": "^9.39.5",
+    "globals": "^17.14.0",
+    "jest": "^30.5.2",
+    "nodemon": "^3.1.14",
+    "prettier": "^3.9.10",
+    "supertest": "^7.3.2"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

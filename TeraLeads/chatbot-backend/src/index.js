@@ -1,4 +1,4 @@
-require('dotenv').config()
+require('dotenv').config({ quiet: true })
 const http = require('http')
 const app = require('./app')
 const { attachRealtime } = require('./realtime')
