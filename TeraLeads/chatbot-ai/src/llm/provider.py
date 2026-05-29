@@ -76,7 +76,7 @@ class LLMProvider:
                     "LLM_PROVIDER=local to run without one."
                 )
             return ChatOpenAI(
-                model=os.getenv("OPENAI_MODEL", "gpt-3.5-turbo"),
+                model=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
                 temperature=0.7,
                 openai_api_key=api_key,
             )
@@ -89,7 +89,7 @@ class LLMProvider:
                     "LLM_PROVIDER=local to run without one."
                 )
             return ChatAnthropic(
-                model=os.getenv("ANTHROPIC_MODEL", "claude-3-sonnet-20240229"),
+                model=os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-5"),
                 temperature=0.7,
                 anthropic_api_key=api_key,
             )
