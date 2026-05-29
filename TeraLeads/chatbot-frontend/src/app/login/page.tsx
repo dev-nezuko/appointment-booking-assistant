@@ -22,7 +22,11 @@ export default function LoginPage() {
   }
 
   return (
-    <div id="main-content" className="flex min-h-screen items-center justify-center p-4 md:p-24" role="main">
+    <div
+      id="main-content"
+      className="flex min-h-screen items-center justify-center p-4 md:p-24"
+      role="main"
+    >
       <div className="w-full max-w-md space-y-8">
         <h1 className="text-2xl md:text-3xl font-bold text-center">Authentication</h1>
         <LoginForm />
@@ -36,4 +40,3 @@ export default function LoginPage() {
     </div>
   )
 }
-

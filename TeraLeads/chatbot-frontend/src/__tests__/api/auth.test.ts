@@ -6,7 +6,7 @@
 
 import { login, signup, logout, AuthenticationError } from '@/api/auth'
 import { apiClient } from '@/api/client'
-import { AxiosError } from 'axios'
+import { AxiosError, InternalAxiosRequestConfig } from 'axios'
 
 // Mock the API client
 jest.mock('@/api/client')
@@ -40,31 +40,21 @@ describe('Authentication API', () => {
     })
 
     it('should throw AuthenticationError on invalid credentials', async () => {
-      const mockError = new AxiosError(
-        'Request failed',
-        '401',
-        undefined,
-        undefined,
-        {
-          status: 401,
-          data: { error: 'Invalid credentials' },
-          statusText: 'Unauthorized',
-          headers: {},
-          config: {} as any,
-        }
-      )
+      const mockError = new AxiosError('Request failed', '401', undefined, undefined, {
+        status: 401,
+        data: { error: 'Invalid credentials' },
+        statusText: 'Unauthorized',
+        headers: {},
+        config: {} as InternalAxiosRequestConfig,
+      })
 
       ;(apiClient.post as jest.Mock).mockRejectedValue(mockError)
 
-      await expect(login('test@example.com', 'wrong')).rejects.toThrow(
-        AuthenticationError
-      )
+      await expect(login('test@example.com', 'wrong')).rejects.toThrow(AuthenticationError)
     })
 
     it('should validate email and password are provided', async () => {
-      await expect(login('', 'password')).rejects.toThrow(
-        'Email and password are required'
-      )
+      await expect(login('', 'password')).rejects.toThrow('Email and password are required')
       await expect(login('email@example.com', '')).rejects.toThrow(
         'Email and password are required'
       )
@@ -92,9 +82,9 @@ describe('Authentication API', () => {
     })
 
     it('should validate password length', async () => {
-      await expect(
-        signup('test@example.com', 'short', 'Test User')
-      ).rejects.toThrow('Password must be at least 6 characters')
+      await expect(signup('test@example.com', 'short', 'Test User')).rejects.toThrow(
+        'Password must be at least 6 characters'
+      )
     })
   })
 

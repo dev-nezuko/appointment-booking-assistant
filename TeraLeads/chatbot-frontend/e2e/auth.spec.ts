@@ -17,7 +17,10 @@ test.describe('Authentication', () => {
   test('login form validation - shows error on invalid credentials', async ({ page }) => {
     await page.goto('/login')
     await page.getByLabel(/email/i).fill('wrong@example.com')
-    await page.getByLabel(/password/i).first().fill('wrongpassword')
+    await page
+      .getByLabel(/password/i)
+      .first()
+      .fill('wrongpassword')
     await page.getByRole('button', { name: /login/i }).click()
 
     await expect(page.getByRole('alert')).toBeVisible({ timeout: 5000 })

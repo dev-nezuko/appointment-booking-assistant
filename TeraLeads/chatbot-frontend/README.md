@@ -41,10 +41,10 @@ NEXT_PUBLIC_WS_URL=http://localhost:3001
 
 ## Environment Variables
 
-| Variable | Description | Default |
-|----------|-------------|---------|
+| Variable              | Description                            | Default                 |
+| --------------------- | -------------------------------------- | ----------------------- |
 | `NEXT_PUBLIC_API_URL` | Backend API base URL for REST requests | `http://localhost:3001` |
-| `NEXT_PUBLIC_WS_URL` | WebSocket (Socket.io) server URL | `http://localhost:3001` |
+| `NEXT_PUBLIC_WS_URL`  | WebSocket (Socket.io) server URL       | `http://localhost:3001` |
 
 ## Development
 

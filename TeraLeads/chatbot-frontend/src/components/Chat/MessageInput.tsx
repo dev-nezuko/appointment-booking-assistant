@@ -46,4 +46,3 @@ export function MessageInput({ onSend, isLoading = false, disabled = false }: Me
     </form>
   )
 }
-

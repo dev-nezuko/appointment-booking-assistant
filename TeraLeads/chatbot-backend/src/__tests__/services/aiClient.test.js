@@ -42,9 +42,7 @@ describe('aiClient.sendMessage', () => {
   })
 
   it('turns a non-2xx answer into a 502 with the status in the message', async () => {
-    jest
-      .spyOn(global, 'fetch')
-      .mockImplementation(() => reply({ detail: 'boom' }, { status: 503 }))
+    jest.spyOn(global, 'fetch').mockImplementation(() => reply({ detail: 'boom' }, { status: 503 }))
 
     await expect(
       aiClient.sendMessage({ sessionId: 's', message: 'm', userId: 1 })

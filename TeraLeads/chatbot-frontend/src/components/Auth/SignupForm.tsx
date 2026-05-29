@@ -33,9 +33,7 @@ export function SignupForm() {
       router.push('/chat')
     } catch (err) {
       setError(
-        err instanceof AuthenticationError
-          ? err.message
-          : 'Signup failed. Please try again.'
+        err instanceof AuthenticationError ? err.message : 'Signup failed. Please try again.'
       )
     } finally {
       setIsLoading(false)
@@ -105,4 +103,3 @@ export function SignupForm() {
     </form>
   )
 }
-

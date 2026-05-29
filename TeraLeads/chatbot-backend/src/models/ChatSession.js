@@ -1,26 +1,16 @@
 const pool = require('../config/database')
 
 class ChatSession {
-  static async create({
-    user_id,
-    appointment_id = null,
-    business_id = null,
-    session_key = null,
-  }) {
-    // The browser's opaque session key lives in metadata rather than in a new
-    // column, so this needs no migration against an existing database.
+  static async create({ user_id, appointment_id = null, business_id = null, session_key = null }) {
+    // The browser's opaque session key lives in metadata, so existing
+    // databases need no migration.
     const query = `
       INSERT INTO chat_sessions (user_id, appointment_id, business_id, metadata, created_at)
       VALUES ($1, $2, $3, $4::jsonb, NOW())
       RETURNING *
     `
     const metadata = JSON.stringify(session_key ? { session_key } : {})
-    const result = await pool.query(query, [
-      user_id,
-      appointment_id,
-      business_id,
-      metadata,
-    ])
+    const result = await pool.query(query, [user_id, appointment_id, business_id, metadata])
     return result.rows[0]
   }
 
@@ -42,10 +32,11 @@ class ChatSession {
   }
 
   static async findById(id) {
-    // A non-numeric id is a lookup miss, not a database error. Passing one
-    // through made Postgres raise `invalid input syntax for type integer`,
-    // which surfaced to the user as a 500.
-    if (!/^\d+$/.test(String(id))) return null
+    // A non-numeric id is a lookup miss, not a database error; Postgres would
+    // reject it with `invalid input syntax for type integer`.
+    if (!/^\d+$/.test(String(id))) {
+      return null
+    }
     const query = 'SELECT * FROM chat_sessions WHERE id = $1'
     const result = await pool.query(query, [id])
     return result.rows[0] || null

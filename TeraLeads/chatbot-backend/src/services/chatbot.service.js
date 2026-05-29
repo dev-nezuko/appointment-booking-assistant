@@ -37,7 +37,12 @@ const persistBooking = async (userId, chatSessionId, booking) => {
     logger.warn({ action: 'chat_booking_conflict', userId, date, time })
     return {
       message: SLOT_TAKEN_REPLY,
-      booking: { status: 'unavailable', missingFields: ['time'], alternatives: [], appointment: null },
+      booking: {
+        status: 'unavailable',
+        missingFields: ['time'],
+        alternatives: [],
+        appointment: null,
+      },
     }
   }
 }

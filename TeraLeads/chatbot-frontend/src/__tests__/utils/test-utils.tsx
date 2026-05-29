@@ -7,10 +7,7 @@ function AllTheProviders({ children }: { children: React.ReactNode }) {
   return <Provider store={store}>{children}</Provider>
 }
 
-function customRender(
-  ui: React.ReactElement,
-  options?: Omit<RenderOptions, 'wrapper'>
-) {
+function customRender(ui: React.ReactElement, options?: Omit<RenderOptions, 'wrapper'>) {
   return render(ui, {
     wrapper: AllTheProviders,
     ...options,

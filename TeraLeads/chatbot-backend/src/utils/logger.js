@@ -1,82 +1,35 @@
 /**
- * Logger Utility
- *
- * Centralized logging utility for consistent log formatting.
- * In production, consider using a proper logging library like Winston or Pino.
- *
- * Security considerations:
- * - Never logs passwords, tokens, or other sensitive data
- * - Sanitizes user input before logging
+ * Console logger with a timestamp and level prefix. Objects are shallow-copied
+ * with credential-like fields replaced, so a careless log call cannot leak a
+ * password or token.
  */
 
-/**
- * Sanitizes data to remove sensitive information before logging
- *
- * @param {Object} data - Data object to sanitize
- * @returns {Object} Sanitized data object
- */
-const sanitizeLogData = (data) => {
+const SENSITIVE_FIELDS = ['password', 'token', 'secret', 'apiKey', 'authorization']
+
+const redact = (data) => {
   if (!data || typeof data !== 'object') {
     return data
   }
-
-  const sensitiveFields = ['password', 'token', 'secret', 'apiKey', 'authorization']
-  const sanitized = { ...data }
-
-  sensitiveFields.forEach((field) => {
-    if (sanitized[field]) {
-      sanitized[field] = '[REDACTED]'
+  const copy = { ...data }
+  SENSITIVE_FIELDS.forEach((field) => {
+    if (copy[field]) {
+      copy[field] = '[REDACTED]'
     }
   })
-
-  return sanitized
+  return copy
 }
 
-/**
- * Logger object with info, error, and warn methods
- */
+const stamp = (level) => `[${level}] ${new Date().toISOString()}`
+
 const logger = {
-  /**
-   * Logs informational messages
-   *
-   * @param {Object|string} data - Data to log
-   */
-  info: (data) => {
-    const sanitized = typeof data === 'object' ? sanitizeLogData(data) : data
-    // eslint-disable-next-line no-console
-    console.log(`[INFO] ${new Date().toISOString()}`, sanitized)
-  },
-
-  /**
-   * Logs error messages
-   *
-   * @param {Object|string} data - Error data to log
-   */
-  error: (data) => {
-    const sanitized = typeof data === 'object' ? sanitizeLogData(data) : data
-    console.error(`[ERROR] ${new Date().toISOString()}`, sanitized)
-  },
-
-  /**
-   * Logs warning messages
-   *
-   * @param {Object|string} data - Warning data to log
-   */
-  warn: (data) => {
-    const sanitized = typeof data === 'object' ? sanitizeLogData(data) : data
-    console.warn(`[WARN] ${new Date().toISOString()}`, sanitized)
-  },
-
-  /**
-   * Logs debug messages (only in development)
-   *
-   * @param {Object|string} data - Debug data to log
-   */
+  // eslint-disable-next-line no-console
+  info: (data) => console.log(stamp('INFO'), redact(data)),
+  error: (data) => console.error(stamp('ERROR'), redact(data)),
+  warn: (data) => console.warn(stamp('WARN'), redact(data)),
   debug: (data) => {
     if (process.env.NODE_ENV === 'development') {
-      const sanitized = typeof data === 'object' ? sanitizeLogData(data) : data
       // eslint-disable-next-line no-console
-      console.debug(`[DEBUG] ${new Date().toISOString()}`, sanitized)
+      console.debug(stamp('DEBUG'), redact(data))
     }
   },
 }

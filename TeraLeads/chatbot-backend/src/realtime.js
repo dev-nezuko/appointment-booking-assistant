@@ -23,30 +23,32 @@ const authenticate = (socket, next) => {
   return next()
 }
 
-const createMessageHandler = (socket) => async (payload = {}) => {
-  const { sessionId, message } = payload
-  if (!message || typeof message !== 'string' || !message.trim()) {
-    socket.emit('chat:error', { message: 'A non-empty message is required' })
-    return
-  }
+const createMessageHandler =
+  (socket) =>
+  async (payload = {}) => {
+    const { sessionId, message } = payload
+    if (!message || typeof message !== 'string' || !message.trim()) {
+      socket.emit('chat:error', { message: 'A non-empty message is required' })
+      return
+    }
 
-  try {
-    const result = await chatbotService.sendMessage(socket.userId, sessionId, message.trim())
-    socket.emit('bot:message', {
-      id: `${Date.now()}`,
-      text: result.message,
-      sender: 'bot',
-      timestamp: new Date().toISOString(),
-      sessionId: result.sessionId,
-      booking: result.booking,
-    })
-  } catch (err) {
-    logger.error({ action: 'ws_message_failed', error: err.message })
-    socket.emit('chat:error', {
-      message: 'The assistant is unavailable right now. Please try again.',
-    })
+    try {
+      const result = await chatbotService.sendMessage(socket.userId, sessionId, message.trim())
+      socket.emit('bot:message', {
+        id: `${Date.now()}`,
+        text: result.message,
+        sender: 'bot',
+        timestamp: new Date().toISOString(),
+        sessionId: result.sessionId,
+        booking: result.booking,
+      })
+    } catch (err) {
+      logger.error({ action: 'ws_message_failed', error: err.message })
+      socket.emit('chat:error', {
+        message: 'The assistant is unavailable right now. Please try again.',
+      })
+    }
   }
-}
 
 const attachRealtime = (httpServer) => {
   const io = new Server(httpServer, {

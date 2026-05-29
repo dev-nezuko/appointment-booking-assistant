@@ -29,7 +29,11 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const storedToken = getToken()
   if (storedToken && !isTokenExpired(storedToken)) {
     return (
-      <div className="flex min-h-screen items-center justify-center" role="status" aria-live="polite">
+      <div
+        className="flex min-h-screen items-center justify-center"
+        role="status"
+        aria-live="polite"
+      >
         <LoadingSpinner size="lg" />
       </div>
     )

@@ -23,13 +23,8 @@ export default function ChatPage() {
         <header className="flex items-center justify-between mb-6 md:mb-8">
           <h1 className="text-2xl md:text-3xl font-bold">Chat with AI Assistant</h1>
           <div className="flex items-center gap-4">
-            {user && (
-              <span className="text-sm text-gray-600 hidden sm:inline">{user.email}</span>
-            )}
-            <Link
-              href="/"
-              className="text-sm text-blue-500 hover:underline"
-            >
+            {user && <span className="text-sm text-gray-600 hidden sm:inline">{user.email}</span>}
+            <Link href="/" className="text-sm text-blue-500 hover:underline">
               Home
             </Link>
             <button
@@ -47,4 +42,3 @@ export default function ChatPage() {
     </ProtectedRoute>
   )
 }
-

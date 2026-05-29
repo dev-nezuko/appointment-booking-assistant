@@ -33,9 +33,7 @@ export function MessageList({ messages }: MessageListProps) {
           >
             <div
               className={`max-w-[85%] sm:max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                message.sender === 'user'
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-200 text-gray-800'
+                message.sender === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'
               }`}
             >
               <p>{message.text}</p>
@@ -56,4 +54,3 @@ export function MessageList({ messages }: MessageListProps) {
     </div>
   )
 }
-

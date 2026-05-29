@@ -2,14 +2,14 @@ require('dotenv').config()
 const http = require('http')
 const app = require('./app')
 const { attachRealtime } = require('./realtime')
+const logger = require('./utils/logger')
 
 const PORT = process.env.PORT || 3001
 
-// An explicit http.Server, because socket.io needs to attach to one.
-// `app.listen()` creates one internally and never hands it back.
+// socket.io attaches to an http.Server, which app.listen() would not hand back.
 const server = http.createServer(app)
 attachRealtime(server)
 
 server.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT} (HTTP + WebSocket)`)
+  logger.info(`Server is running on port ${PORT} (HTTP + WebSocket)`)
 })

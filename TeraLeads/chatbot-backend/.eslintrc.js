@@ -16,5 +16,11 @@ module.exports = {
     'eqeqeq': ['error', 'always'],
     'curly': ['error', 'all'],
   },
+  overrides: [
+    {
+      files: ['src/**/__tests__/**/*.js'],
+      env: { jest: true },
+    },
+  ],
 }
 

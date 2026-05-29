@@ -11,8 +11,14 @@ test.describe('Chat', () => {
   test('chat page displays when authenticated', async ({ page }) => {
     await page.goto('/login')
     await page.getByLabel(/full name/i).fill('E2E Test User')
-    await page.getByLabel(/email address/i).last().fill('e2e@example.com')
-    await page.getByLabel(/^password$/i).last().fill('password123')
+    await page
+      .getByLabel(/email address/i)
+      .last()
+      .fill('e2e@example.com')
+    await page
+      .getByLabel(/^password$/i)
+      .last()
+      .fill('password123')
     await page.getByRole('button', { name: /sign up/i }).click()
 
     await page.waitForURL(/.*chat/, { timeout: 15000 })
@@ -25,7 +31,10 @@ test.describe('Chat', () => {
   test('message input is interactive', async ({ page }) => {
     await page.goto('/login')
     await page.getByLabel(/email/i).fill('e2e@example.com')
-    await page.getByLabel(/password/i).first().fill('password123')
+    await page
+      .getByLabel(/password/i)
+      .first()
+      .fill('password123')
     await page.getByRole('button', { name: /login/i }).click()
 
     await page.waitForURL(/.*chat/, { timeout: 15000 })

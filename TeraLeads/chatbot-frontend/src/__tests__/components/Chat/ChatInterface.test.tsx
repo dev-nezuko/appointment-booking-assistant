@@ -21,7 +21,6 @@ jest.mock('@/utils/websocket', () => ({
   connectWebSocket: jest.fn(),
   disconnectWebSocket: jest.fn(),
   getSocket: jest.fn(() => mockSocket),
-  getConnectionStatus: jest.fn(() => 'disconnected'),
 }))
 
 jest.mock('@/api/chatbot', () => ({
@@ -80,9 +79,7 @@ describe('ChatInterface', () => {
 
   it('displays error message when send fails', async () => {
     const { sendMessage, ChatbotError } = await import('@/api/chatbot')
-    ;(sendMessage as jest.Mock).mockRejectedValue(
-      new ChatbotError('Failed to send message')
-    )
+    ;(sendMessage as jest.Mock).mockRejectedValue(new ChatbotError('Failed to send message'))
 
     const user = userEvent.setup()
     render(<ChatInterface />)
