@@ -50,6 +50,16 @@ class TestDateExtraction:
         # "January 5" said in March means next January.
         assert extract_date("january 5", TODAY) == "2027-01-05"
 
+    @pytest.mark.parametrize(
+        "text", ["february 30 please", "31 april", "2026-02-30", "2026-13-01"]
+    )
+    def test_an_impossible_date_is_not_a_date(self, text):
+        assert extract_date(text, TODAY) is None
+
+    def test_an_impossible_date_still_gets_a_reply(self):
+        reply = compose_reply("consultation on february 30 at 2pm", TODAY)
+        assert "date" in reply
+
     def test_no_date_mentioned_returns_none(self):
         # Not a default, not today — None, so the flow asks.
         assert extract_date("I need an appointment", TODAY) is None

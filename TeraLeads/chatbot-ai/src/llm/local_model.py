@@ -83,7 +83,10 @@ def extract_date(text: str, today: Optional[datetime] = None) -> Optional[str]:
 
     iso = re.search(r"\b(\d{4})-(\d{2})-(\d{2})\b", text)
     if iso:
-        return iso.group(0)
+        try:
+            return datetime.strptime(iso.group(0), "%Y-%m-%d").strftime("%Y-%m-%d")
+        except ValueError:
+            return None
 
     if re.search(r"\btoday\b", lowered):
         return today.strftime("%Y-%m-%d")
@@ -109,10 +112,14 @@ def extract_date(text: str, today: Optional[datetime] = None) -> Optional[str]:
         match = re.search(pattern, lowered)
         if match:
             day = int(match.group(1) or match.group(2))
-            year = today.year
-            candidate = datetime(year, number, day).date()
-            if candidate < today:  # a month already past means next year
-                candidate = datetime(year + 1, number, day).date()
+            try:
+                candidate = datetime(today.year, number, day).date()
+                if candidate < today:  # a month already past means next year
+                    candidate = datetime(today.year + 1, number, day).date()
+            except ValueError:
+                # "February 30", or "February 29" rolling into a non-leap year:
+                # not a date, so leave it for the flow to ask about.
+                return None
             return candidate.strftime("%Y-%m-%d")
 
     return None
