@@ -1,4 +1,11 @@
-const { Pool } = require('pg')
+const { Pool, types } = require('pg')
+const logger = require('../utils/logger')
+
+// Return DATE columns as 'YYYY-MM-DD' strings. pg's default turns them into a
+// Date at local midnight, which serialises as the previous day in any server
+// timezone east of UTC and as a misleading timestamp everywhere else.
+const DATE_OID = 1082
+types.setTypeParser(DATE_OID, (value) => value)
 
 const pool = new Pool({
   host: process.env.DB_HOST || 'localhost',
@@ -9,8 +16,8 @@ const pool = new Pool({
 })
 
 pool.on('error', (err) => {
-  console.error('Unexpected error on idle client', err)
-  process.exit(-1)
+  logger.error({ action: 'pg_idle_client_error', error: err.message })
+  process.exit(1)
 })
 
 module.exports = pool
