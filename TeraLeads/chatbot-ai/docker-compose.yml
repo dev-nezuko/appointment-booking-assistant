@@ -1,0 +1,32 @@
+version: "3.8"
+
+services:
+  ai-chatbot:
+    build: .
+    image: chatbot-ai:latest
+    container_name: ai-chatbot-microservice
+    ports:
+      - "8000:8000"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8000
+      - PYTHONPATH=/app/src
+      - DATA_DIR=/app/data
+      - LOG_DIR=/app/logs
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - LLM_PROVIDER=${LLM_PROVIDER:-openai}
+      - BACKEND_API_URL=${BACKEND_API_URL:-http://host.docker.internal:3000/api}
+    volumes:
+      - chatbot-data:/app/data
+      - chatbot-logs:/app/logs
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+volumes:
+  chatbot-data:
+  chatbot-logs:

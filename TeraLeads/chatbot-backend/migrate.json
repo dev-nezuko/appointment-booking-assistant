@@ -1,0 +1,7 @@
+{
+  "databaseUrl": {
+    "env": "DATABASE_URL"
+  },
+  "dir": "src/database/migrations",
+  "migrationsTable": "pgmigrations"
+}
