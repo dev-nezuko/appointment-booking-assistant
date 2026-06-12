@@ -5,3 +5,4 @@ Thumbs.db
 # Root-level env (if any)
 .env
 .env.local
+
