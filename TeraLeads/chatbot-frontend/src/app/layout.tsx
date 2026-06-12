@@ -1,14 +1,11 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
 import '../styles/globals.css'
 import { ReduxProvider } from '@/components/Providers/ReduxProvider'
 import { AuthInitializer } from '@/components/Auth/AuthInitializer'
 
-const inter = Inter({ subsets: ['latin'] })
-
 export const metadata: Metadata = {
   title: 'AI Chatbot - Appointment Booking',
-  description: 'AI-powered chatbot for appointment scheduling',
+  description: 'A full-stack appointment conversation prototype with a separate Python scheduling service',
 }
 
 export default function RootLayout({
@@ -18,7 +15,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body>
         <a href="#main-content" className="skip-link">
           Skip to main content
         </a>

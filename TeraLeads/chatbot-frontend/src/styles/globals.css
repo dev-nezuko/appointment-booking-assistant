@@ -2,29 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
-  }
-}
-
-body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
-}
+body { margin: 0; color: #203731; background: #f7f8f4; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+.booking-home { max-width: 1160px; margin: auto; padding: 30px 36px; }
+.booking-nav { display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 21px; padding-bottom: 35px; border-bottom: 1px solid #dce3db; }
+.prototype-tag { font-size: 12px; font-weight: 500; padding: 7px 12px; border: 1px solid #cbd8cc; border-radius: 20px; }
+.booking-hero { display: grid; grid-template-columns: 1.3fr 1fr; gap: 64px; align-items: center; padding: 75px 0 60px; }
+.booking-eyebrow { color: #517666; letter-spacing: .14em; font-size: 11px; font-weight: 700; }
+.booking-hero h1 { font-size: clamp(34px,4.5vw,54px); font-weight: 650; line-height: 1.12; letter-spacing: -.04em; margin: 20px 0; }
+.booking-intro { font-size: 16px; color: #5b7065; line-height: 1.8; margin-bottom: 28px; }
+.booking-cta { display: inline-block; padding: 14px 22px; border-radius: 7px; background: #2d6550; color: white; font-size: 14px; font-weight: 600; }
+.booking-disclaimer { color: #667b6f; font-size: 12px; margin-top: 14px; }
+.booking-flow { background: #eaf0e7; border: 1px solid #d6e2d1; border-radius: 14px; padding: 32px; }
+.booking-flow ol { list-style: decimal; padding-left: 22px; }.booking-flow li { padding: 18px 0 12px 10px; border-bottom: 1px solid #d2ddcf; }.booking-flow li:last-child { border: none; }.booking-flow strong { font-size: 15px; }.booking-flow p { font-size: 13px; line-height: 1.6; color: #5b7065; margin-top: 6px; }
+.booking-status { padding: 25px 30px; background: white; border: 1px solid #dce3db; border-radius: 10px; }.booking-status h2 { font-size: 19px; font-weight: 650; margin-bottom: 10px; }.booking-status p { color: #5b7065; font-size: 14px; line-height: 1.8; }.booking-status p+p { margin-top: 10px; }
+.booking-footer { color: #6c7f72; font-size: 12px; margin-top: 30px; }
+@media(max-width:700px) { .booking-home { padding: 22px 18px; }.booking-hero { grid-template-columns: minmax(0,1fr); padding: 40px 0; gap: 28px; }.booking-nav { font-size: 18px; }.booking-status,.booking-flow { padding: 22px; } }
 
 /* Focus styles for accessibility */
 :focus-visible {
